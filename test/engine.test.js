@@ -20,7 +20,9 @@ const fakeHistory = (game, n, seed = 1) => {
 test('pattern metrics', () => {
   const m = createMeter(49, 7);
   // odd, low, sum, maxRun, maxAP, maxDecade, maxEnding, maxRow, maxCol, spread
-  assert.deepStrictEqual(m([1, 2, 3, 4, 5, 6], []), [3, 6, 21, 6, 6, 6, 1, 6, 1, 5]);
+  assert.deepStrictEqual(m([1, 2, 3, 4, 5, 6], []), [3, 6, 21, 6, 6, 6, 1, 6, 1, 5, 3, 1, 5, 2, 1]);
+  // primes, decades, neighbour pairs, most with one remainder mod 3, largest gap
+  assert.deepStrictEqual(m([2, 9, 15, 27, 40, 49], []).slice(10), [1, 4, 0, 3, 13]);
   assert.deepStrictEqual(m([3, 10, 17, 24, 30, 45], []).slice(4, 5), [4]);
   assert.strictEqual(m([5, 10, 15, 20, 25, 49], [])[4], 5);
 });
@@ -42,10 +44,10 @@ test('expected distributions add up to all combinations', () => {
   for (const m of Object.values(d.metrics)) assert.strictEqual(m.counts.reduce((s, c) => s + c, 0), d.total);
 });
 
-test('the default filters remove about 30 % of Lotto', { timeout: 60000 }, () => {
+test('the default filters remove about half of Lotto', { timeout: 60000 }, () => {
   const res = census(GAMES.lotto.pools[0], GAMES.lotto.slipColumns, defaultFilters(GAMES.lotto.pools[0]), null);
   const removed = 1 - res.allowedCount / res.total;
-  assert.ok(removed > 0.28 && removed < 0.36, `removed ${removed}`);
+  assert.ok(removed > 0.42 && removed < 0.52, `removed ${removed}`);
 });
 
 test('history filter removes past draws and near misses', () => {

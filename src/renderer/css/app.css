@@ -189,3 +189,4 @@ details summary { cursor: pointer; color: var(--muted); margin: 6px 0; }
 .btn.small { padding: 3px 10px; font-size: 12px; }
 .row-actions { display: flex; gap: 8px; margin-top: 8px; }
 .check { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.ticket.dim { opacity: .5; }

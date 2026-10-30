@@ -20,7 +20,14 @@ moves them into a numbered section automatically (see README → Releasing).
 - New draw results are downloaded automatically at start (switch in Settings).
 - The exclusion map of the filters (one bit per combination, 1.7 MB for Lotto) is saved in `data/combinations` and reused after a restart.
 
+- Five more filters: prime numbers, decades used, pairs of neighbours, remainder of division by 3 and the
+  largest gap; the recommended preset now removes ~47 % of Lotto combinations (the previous one is "Light").
+- **Which number comes next to which**: neighbour pairs in the sorted results against their exact expectation.
+- **Lotto system bets** (7–12 numbers): prize table for every outcome, numbers chosen to pass the filters.
+- Generator: at most N numbers shared by any two tickets of a coupon.
+
 ### Changed
+- Lotto costs 5 zł per bet and pays 35 zł for three hits since 18 August 2026.
 - All data (history, settings, caches) is kept in the `data` folder inside the install folder; uninstalling
   removes everything, updates keep it.
 - Shorter README.

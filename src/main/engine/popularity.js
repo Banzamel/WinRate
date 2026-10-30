@@ -27,7 +27,7 @@ const W = {
 function createScorer(pool, cols, last = []) {
   const { size: n, pick: k } = pool;
   const measure = createMeter(n, cols);
-  const m = new Array(10);
+  const m = new Array(15);
   const lastSet = new Set(last);
   const raw = (a) => {
     measure(a, m);

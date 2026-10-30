@@ -8,7 +8,8 @@
 const { binom, rank, forEachCombination } = require('./combinatorics');
 
 // Pattern metrics of a sorted combination `a` (1-based numbers) in a pool of n, slip of `cols` columns.
-const METRICS = ['odd', 'low', 'sum', 'maxRun', 'maxAP', 'maxDecade', 'maxEnding', 'maxRow', 'maxCol', 'spread'];
+const METRICS = ['odd', 'low', 'sum', 'maxRun', 'maxAP', 'maxDecade', 'maxEnding', 'maxRow', 'maxCol', 'spread', 'primes', 'decades', 'consPairs', 'maxMod3', 'maxGap'];
+const PRIMES = new Set([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]);
 
 function createMeter(n, cols) {
   const mark = new Uint8Array(n + 2);
@@ -17,6 +18,9 @@ function createMeter(n, cols) {
   const groups = [(x) => Math.floor(x / 10), (x) => x % 10, (x) => Math.floor((x - 1) / cols), (x) => (x - 1) % cols]
     .map((key) => Uint8Array.from({ length: n + 1 }, (_, x) => key(x)));
   const counts = groups.map((g) => new Uint8Array(Math.max(...g) + 1));
+  const prime = Uint8Array.from({ length: n + 1 }, (_, x) => (PRIMES.has(x) ? 1 : 0));
+  const decadeSeen = new Uint8Array(11);
+  const mod3 = new Uint8Array(3);
   // Fills `out` (array indexed like METRICS) and returns it.
   return function measure(a, out) {
     const k = a.length;
@@ -50,6 +54,21 @@ function createMeter(n, cols) {
       out[5 + g] = best;
     }
     out[9] = a[k - 1] - a[0];
+    // Primes, distinct decades, pairs of neighbours (x, x+1), most numbers with one remainder of
+    // division by 3, and the largest gap between neighbouring numbers of the ticket.
+    let primes = 0; let decades = 0; let consPairs = 0; let maxGap = 0; let maxMod3 = 0;
+    for (let i = 0; i < k; i++) {
+      const x = a[i];
+      primes += prime[x];
+      const d = (x / 10) | 0;
+      if (!decadeSeen[d]) { decadeSeen[d] = 1; decades++; }
+      const r = ++mod3[x % 3];
+      if (r > maxMod3) maxMod3 = r;
+      if (i > 0) { const gap = x - a[i - 1]; if (gap === 1) consPairs++; if (gap > maxGap) maxGap = gap; }
+    }
+    for (let i = 0; i < k; i++) decadeSeen[(a[i] / 10) | 0] = 0;
+    mod3[0] = 0; mod3[1] = 0; mod3[2] = 0;
+    out[10] = primes; out[11] = decades; out[12] = consPairs; out[13] = maxMod3; out[14] = maxGap;
     return out;
   };
 }
@@ -67,6 +86,11 @@ const FILTERS = [
   { id: 'maxRow', kind: 'max', metric: 7 },
   { id: 'maxCol', kind: 'max', metric: 8 },
   { id: 'minSpread', kind: 'min', metric: 9 },
+  { id: 'primes', kind: 'range', metric: 10 },
+  { id: 'minDecades', kind: 'min', metric: 11 },
+  { id: 'maxConsPairs', kind: 'max', metric: 12 },
+  { id: 'maxMod3', kind: 'max', metric: 13 },
+  { id: 'maxGap', kind: 'max', metric: 14 },
   { id: 'birthdays', kind: 'flag' }, // every number 1..31 (dates): the most shared tickets
   { id: 'history', kind: 'history' }, // shares at least N numbers with a past draw
   { id: 'lastOverlap', kind: 'last' }, // at most N numbers from the previous draw
@@ -75,7 +99,7 @@ const FILTERS = [
 ];
 
 // Suggested starting point: removes the shapes that rarely come out *and* that crowds of
-// players pick (so a win is less often shared). Tuned to remove roughly 30 % of Lotto tickets.
+// players pick (so a win is less often shared). Removes about 47 % of Lotto tickets.
 function defaultFilters(pool) {
   const { size: n, pick: k } = pool;
   const mean = (k * (n + 1)) / 2;
@@ -91,6 +115,11 @@ function defaultFilters(pool) {
     maxRow: 3,
     maxCol: 3,
     minSpread: Math.round(n / 3),
+    primes: [k >= 6 ? 1 : 0, k - 2],
+    minDecades: k - 3,
+    maxConsPairs: 1,
+    maxMod3: k - 2,
+    maxGap: Math.floor(n / 2),
     birthdays: true,
     history: k,
     lastOverlap: null,
@@ -298,4 +327,4 @@ function historySurvival(pool, cols, config, draws) {
   return { draws: draws.length, survived, removed: FILTERS.map((f, i) => ({ id: f.id, count: removed[i], share: draws.length ? removed[i] / draws.length : 0 })) };
 }
 
-module.exports = { METRICS, FILTERS, createMeter, defaultFilters, HistoryContext, splitConfig, createChecker, census, distributions, historySurvival, isAllowed };
+module.exports = { PRIMES, METRICS, FILTERS, createMeter, defaultFilters, HistoryContext, splitConfig, createChecker, census, distributions, historySurvival, isAllowed };

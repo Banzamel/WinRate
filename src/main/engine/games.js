@@ -12,18 +12,21 @@ const GAMES = {
     // Rule eras: the pool sizes in force from a date on (history is checked against them).
     eras: [{ from: '1957-01-27', pools: [{ size: 49, pick: 6 }] }],
     schedule: { timeZone: 'Europe/Warsaw', weekdays: [2, 4, 6], time: '22:00' },
-    price: { amount: 3, currency: 'PLN' },
+    // Since 18 August 2026 (before: 3 zł, and 24 zł for three hits).
+    price: { amount: 5, currency: 'PLN' },
     // The 3-hit prize is fixed; the others are pari-mutuel (they depend on sales and winners).
     tiers: [
       { id: '6', hits: [6] },
       { id: '5', hits: [5] },
       { id: '4', hits: [4] },
-      { id: '3', hits: [3], fixed: 24 },
+      { id: '3', hits: [3], fixed: 35 },
     ],
+    // System bets: 7 to 12 numbers on one bet = every 6-number combination of them.
+    system: { min: 7, max: 12 },
     // Coupon layout: numbers fill rows of this many columns (used by the slip-pattern filters).
     slipColumns: 7,
     // Typical average pool prizes (PLN) for the expected-value calculator; editable in the app.
-    typicalPrizes: { 5: 6000, 4: 200 },
+    typicalPrizes: { 5: 7500, 4: 200 },
     typicalJackpot: 15000000,
     typicalSales: 8000000,
     sources: ['http://www.mbnet.com.pl/dl.txt'],

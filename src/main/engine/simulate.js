@@ -167,16 +167,19 @@ function fixedCensus(game, config, onProgress) {
 }
 
 // Tickets for the next draw.
-function generate(game, draws, { strategy = 'filtered', config, count = 5, seed, recent = 50, halfLife = 0, fixed } = {}) {
+// maxCommon: at most this many main numbers shared by any two tickets of the set (spreads a coupon
+// over different numbers instead of near-copies); null = no limit.
+function generate(game, draws, { strategy = 'filtered', config, count = 5, seed, recent = 50, halfLife = 0, fixed, maxCommon = null } = {}) {
   const era = eraDraws(game, draws);
   const ctx = new HistoryContext(currentEra(game).pools[0], era.map((d) => d.pools[0]));
   const player = createPlayer(game, { strategy, config, fixed: fixed || (strategy !== 'random' ? fixedCensus(game, config) : null), ctx, draws: era, rng: createRng(seed), recent, halfLife });
   const seen = new Set(); const tickets = [];
-  for (let i = 0; i < count * 50 && tickets.length < count; i++) {
+  for (let i = 0; i < count * 2000 && tickets.length < count; i++) {
     const t = player.next();
     if (!t) break;
     const key = t.ranks.join(':');
     if (seen.has(key)) continue;
+    if (maxCommon !== null && tickets.some((tk) => tk[0].filter((x) => t.pools[0].includes(x)).length > maxCommon)) continue;
     seen.add(key); tickets.push(t.pools);
   }
   const score = createScorer(currentEra(game).pools[0], game.slipColumns, era.length ? era[era.length - 1].pools[0] : []);
@@ -268,3 +271,27 @@ function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttemp
 }
 
 module.exports = { STRATEGIES, createRng, numberWeights, weightedPick, createPlayer, hitsOf, eraDraws, fixedCensus, generate, backtest, untilHit };
+
+// Numbers for a system bet of m numbers: from many random m-sets (weighted like the strategy),
+// the one whose C(m, 6) bets pass the filters most often. Returns the numbers and that share.
+function systemNumbers(game, draws, { m, strategy = 'filtered', config, seed, tries = 3000, recent = 50, halfLife = 0 } = {}) {
+  const era = eraDraws(game, draws);
+  const pool = currentEra(game).pools[0];
+  const ctx = new HistoryContext(pool, era.map((d) => d.pools[0]));
+  const check = config ? createChecker(pool, game.slipColumns, config, ctx) : () => 0;
+  const rng = createRng(seed);
+  const weights = numberWeights(['random', 'filtered', 'unpopular'].includes(strategy) ? 'random' : strategy, pool.size, pool.pick, era.map((d) => d.pools[0]), recent, halfLife);
+  const { forEachCombination } = require('./combinatorics');
+  let best = null;
+  const sub = new Array(pool.pick);
+  for (let t = 0; t < tries; t++) {
+    const nums = weightedPick(rng, weights, pool.size, m, null, new Array(m));
+    let pass = 0; let total = 0;
+    forEachCombination(m, pool.pick, (idx) => { for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1]; total++; if (!check(sub)) pass++; });
+    if (!best || pass > best.pass) best = { numbers: nums.slice(), pass, total };
+    if (pass === total) break;
+  }
+  return { ...best, share: best.pass / best.total };
+}
+
+module.exports.systemNumbers = systemNumbers;

@@ -5,13 +5,14 @@ import { state, filtersOf, saveGameSettings } from '../js/store.js';
 import { el, card, hint, table, numberInput, spinner, toast } from '../js/ui.js';
 import { runJob } from './game.js';
 
-// Presets: none, the default (~30 % of Lotto) and a strict one.
+// Presets: none, light (~32 % of Lotto), the default (~47 %) and a strict one.
 function presets(game) {
   const def = game.defaultFilters;
   const none = Object.fromEntries(Object.keys(def).map((k) => [k, null]));
   const k = game.pools[0].pick;
   return {
     none,
+    light: { ...def, primes: null, minDecades: null, maxConsPairs: null, maxMod3: null, maxGap: null },
     default: def,
     strict: { ...def, odd: [2, k - 2], low: [2, k - 2], maxRun: 1, maxDecade: 2, history: k - 1, lastOverlap: 1, numberWeight: -0.5 },
   };
@@ -77,7 +78,7 @@ function filterRow(f, config, game, save) {
   return { f, control: el('span', { class: 'filter-control' }, toggle, inputs) };
 }
 
-const fallback = (f, k) => ({ history: k, last: 2, weight: -0.5, pairs: -0.5, max: 3, min: 10, range: [1, k - 1], flag: true }[f.kind]);
+const fallback = (f, k) => ({ history: k, last: 2, weight: -0.5, pairs: -0.5, max: 3, min: 3, range: [1, k - 1], flag: true }[f.kind]);
 
 function summary(result, game) {
   const kept = result.allowedCount / result.total;

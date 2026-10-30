@@ -10,6 +10,7 @@ const stats = require('./engine/stats');
 const sim = require('./engine/simulate');
 const popularity = require('./engine/popularity');
 const { wheel } = require('./engine/wheel');
+const { systemTable } = require('./engine/system');
 const { tierOdds, combinationCount } = require('./engine/games');
 
 // The census of the history-independent filters is reused while the settings stay the same.
@@ -70,6 +71,18 @@ const TASKS = {
     };
   },
 
+  // A Lotto system bet: numbers (given, or chosen to pass the filters best) and its prize table.
+  system({ game, draws, m, numbers, strategy, config, recent, halfLife }) {
+    const g = getGame(game);
+    const pool = currentEra(g).pools[0];
+    const chosen = numbers && numbers.length === m ? { numbers: [...numbers].sort((a, b) => a - b) } : sim.systemNumbers(g, draws, { m, strategy, config, recent, halfLife });
+    const ctx = new filters.HistoryContext(pool, sim.eraDraws(g, draws).map((d) => d.pools[0]));
+    const check = config ? filters.createChecker(pool, g.slipColumns, config, ctx) : () => 0;
+    const bets = [];
+    require('./engine/combinatorics').forEachCombination(m, pool.pick, (idx) => { const b = idx.map((i) => chosen.numbers[i - 1]); bets.push({ numbers: b, passes: !check(b) }); });
+    return { numbers: chosen.numbers, table: systemTable(pool.size, pool.pick, m, tierOdds(g)), bets, price: g.price };
+  },
+
   wheel({ game, numbers, guarantee }) {
     const g = getGame(game);
     const k = currentEra(g).pools[0].pick;
@@ -87,9 +100,9 @@ const TASKS = {
     return { total: all.total, allowedCount: all.allowedCount, filters: all.filters, survival };
   },
 
-  generate({ game, draws, strategy, config, count, recent, halfLife, cacheDir }, progress) {
+  generate({ game, draws, strategy, config, count, recent, halfLife, cacheDir, maxCommon }, progress) {
     const g = getGame(game);
-    return sim.generate(g, draws, { strategy, config, count, recent, halfLife, fixed: strategy === 'random' ? null : fixedFor(g, config, progress, cacheDir) });
+    return sim.generate(g, draws, { strategy, config, count, recent, halfLife, maxCommon, fixed: strategy === 'random' ? null : fixedFor(g, config, progress, cacheDir) });
   },
 
   backtest({ game, draws, strategy, config, tickets, tests, recent, halfLife, cacheDir }, progress) {

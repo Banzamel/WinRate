@@ -44,6 +44,7 @@ export function renderStats(body, id) {
           [...main.numbers].sort((a, b) => b.gap - a.gap).slice(0, 10).map((x) => [ball(x.n, { small: true }), num(x.gap), x.avgGap ? num(x.avgGap, 1) : '–', num(x.maxGap), pct(x.gapChance, 2)])),
         hint(t('stats.gapsHint')))),
     pairsCard(report, game),
+    report.neighbours ? neighboursCard(report.neighbours) : null,
     report.patterns ? patternsCard(report.patterns) : null,
     el('div', { class: 'grid-2' },
       card(t('stats.repeats'),
@@ -120,12 +121,12 @@ function pairsCard(report, game) {
 
 function patternsCard(patterns) {
   return card(t('stats.patterns'),
-    el('div', { class: 'patterns' }, Object.entries(patterns).filter(([m]) => m !== 'sum' && m !== 'spread').map(([metric, p]) => el('div', { class: 'pattern' },
+    el('div', { class: 'patterns' }, Object.entries(patterns).filter(([m]) => !['sum', 'spread', 'maxGap'].includes(m)).map(([metric, p]) => el('div', { class: 'pattern' },
       el('h3', {}, t(`metric.${metric}`), ' ', fitBadge(p.fit)),
       compareBars(p.values.map((v, i) => ({ label: String(v), observed: p.observed[i], expected: p.expected[i] })).filter((r) => r.expected >= 0.05 || r.observed))))),
-    el('div', { class: 'grid-2' }, ['sum', 'spread'].map((metric) => el('div', { class: 'pattern' },
+    el('div', { class: 'patterns' }, ['sum', 'spread', 'maxGap'].filter((metric) => patterns[metric]).map((metric) => el('div', { class: 'pattern' },
       el('h3', {}, t(`metric.${metric}`), ' ', fitBadge(patterns[metric].fit)),
-      compareBars(bucketize(patterns[metric], metric === 'sum' ? 15 : 5))))),
+      compareBars(bucketize(patterns[metric], metric === 'sum' ? 15 : metric === 'spread' ? 5 : 3))))),
     hint(t('stats.patternsHint')));
 }
 
@@ -168,4 +169,18 @@ function physicsCard(game) {
     el('label', {}, t('physics.sensitivity'), select(opts.sensitivity, [[0.5, t('physics.beta.half')], [1, t('physics.beta.one')], [2, t('physics.beta.two')]], (v) => { opts.sensitivity = Number(v); update(); })));
   fill(); update();
   return card(t('physics.title'), el('p', {}, t('physics.intro')), form, out, hint(t('physics.hint')));
+}
+
+// Which number comes next to which in the sorted results, against the exact expectation.
+function neighboursCard(nb) {
+  const row = (p) => [el('span', { class: 'balls' }, ball(p.a, { small: true }), '→', ball(p.b, { small: true })), num(p.count), num(p.expected, 1), num(p.z, 2)];
+  const head = [t('stats.pair'), t('stats.together'), t('stats.expected'), 'z'];
+  return card(t('nb.title'),
+    el('p', {}, t('nb.intro')),
+    el('div', { class: 'grid-2' },
+      el('div', {}, el('h3', {}, t('nb.often')), table(head, nb.strongest.slice(0, 10).map(row))),
+      el('div', {}, el('h3', {}, t('nb.rarely')), table(head, nb.weakest.slice(0, 10).map(row)))),
+    el('h3', {}, t('nb.gaps')),
+    compareBars(nb.gaps.slice(0, 20).map((o, i) => ({ label: `+${i + 1}`, observed: o, expected: nb.gapsExpected[i] }))),
+    fitBadge(nb.fit), hint(t('nb.hint')));
 }

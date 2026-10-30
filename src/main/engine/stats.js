@@ -117,6 +117,34 @@ function pairStats(size, pick, draws, { top = 15 } = {}) {
   };
 }
 
+// "Which number comes next to which": in every sorted result, each number and the next higher one
+// drawn form a neighbour pair (e.g. 12 → 17). For a fair draw the chance that x and y > x are both
+// drawn with nothing in between is C(n − (y − x + 1), k − 2) / C(n, k), so every pair has an exact
+// expectation to compare with.
+function neighbourStats(size, pick, draws, { top = 12 } = {}) {
+  const D = draws.length;
+  const w = size + 1;
+  const m = new Float64Array(w * w);
+  for (const nums of draws) for (let i = 1; i < nums.length; i++) m[nums[i - 1] * w + nums[i]]++;
+  const all = binom(size, pick);
+  const pairs = [];
+  for (let x = 1; x <= size; x++) {
+    for (let y = x + 1; y <= size; y++) {
+      const expected = (D * binom(size - (y - x + 1), pick - 2)) / all;
+      if (expected <= 0) continue;
+      const count = m[x * w + y];
+      pairs.push({ a: x, b: y, count, expected, z: (count - expected) / Math.sqrt(expected) });
+    }
+  }
+  const fit = chiSquare(pairs.map((p) => p.count), pairs.map((p) => p.expected));
+  const ranked = pairs.filter((p) => p.expected >= 5).sort((p, q) => q.z - p.z);
+  // Distribution of the distance to the next drawn number (1 = neighbours on the coupon).
+  const gaps = new Float64Array(size);
+  const gapsExpected = new Float64Array(size);
+  for (const p of pairs) { gaps[p.b - p.a] += p.count; gapsExpected[p.b - p.a] += p.expected; }
+  return { fit, strongest: ranked.slice(0, top), weakest: ranked.slice(-top).reverse(), gaps: Array.from(gaps).slice(1), gapsExpected: Array.from(gapsExpected).slice(1) };
+}
+
 // Pattern metrics of the real draws next to their exact distribution over all combinations
 // (from filters.distributions). Each metric gets a chi-square test.
 function patternStats(pool, cols, draws, expectedDist) {
@@ -164,6 +192,7 @@ function report(game, draws, expectedDist, { recent = 50, halfLife = 0 } = {}) {
     to: draws.length ? draws[draws.length - 1].date : null,
     pools,
     pairs: pairStats(size, pick, main),
+    neighbours: neighbourStats(size, pick, main),
     patterns: expectedDist ? patternStats(game.pools[0], game.slipColumns, main, expectedDist) : null,
     repeats: repeatStats(size, pick, main),
     repeatedDraws: repeatedDraws(main),
@@ -180,4 +209,4 @@ function repeatedDraws(main) {
   return [...seen.entries()].filter(([, idx]) => idx.length > 1).map(([key, idx]) => ({ numbers: key.split(',').map(Number), at: idx }));
 }
 
-module.exports = { gammaQ, chiSquare, numberStats, pairStats, patternStats, repeatStats, repeatedDraws, report };
+module.exports = { gammaQ, chiSquare, numberStats, pairStats, neighbourStats, patternStats, repeatStats, repeatedDraws, report };

@@ -65,7 +65,7 @@ function gameInfo(id) {
     tiers: tierOdds(game), combinations: combinationCount(game), anyPrize: anyPrizeProbability(game),
     nextDraws: nextDraws(game, new Date(), 4).map((d) => d.toISOString()), drawsPerYear: drawsPerYear(game),
     defaultFilters: defaultFilters(currentEra(game).pools[0]), sources: game.sources,
-    typicalPrizes: game.typicalPrizes, typicalJackpot: game.typicalJackpot, typicalSales: game.typicalSales,
+    typicalPrizes: game.typicalPrizes, system: game.system || null, typicalJackpot: game.typicalJackpot, typicalSales: game.typicalSales,
   };
 }
 
@@ -75,7 +75,7 @@ const configFor = (id) => settings.game(id).filters || defaultFilters(currentEra
 const distCache = {};
 async function distributionsFor(id) {
   if (distCache[id]) return distCache[id];
-  const file = path.join(app.getPath('userData'), 'cache', `${id}-distributions-v1.json`);
+  const file = path.join(app.getPath('userData'), 'cache', `${id}-distributions-v2.json`);
   try { distCache[id] = JSON.parse(fs.readFileSync(file, 'utf8')); return distCache[id]; } catch { /* not computed yet */ }
   distCache[id] = await jobs.run('stats', 'distributions', { game: id });
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -178,6 +178,7 @@ function registerIpc() {
   ipcMain.handle('engine:backtest', (_e, id, opts) => jobs.run('sim', 'backtest', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:ev', (_e, id, opts) => jobs.run('ev', 'ev', { game: id, draws: draws(id), ...opts }));
+  ipcMain.handle('engine:system', (_e, id, opts) => jobs.run('generate', 'system', { game: id, draws: draws(id), config: configFor(id), ...opts }));
   ipcMain.handle('engine:wheel', (_e, id, opts) => jobs.run('generate', 'wheel', { game: id, ...opts }));
   ipcMain.handle('job:cancel', (_e, lane) => jobs.cancel(lane));
 

@@ -30,7 +30,7 @@ test('Eurojackpot rule eras', () => {
 test('tier lookup', () => {
   assert.strictEqual(tierFor(GAMES.eurojackpot, [3, 2]).id, '3+2');
   assert.strictEqual(tierFor(GAMES.eurojackpot, [1, 1]), null);
-  assert.strictEqual(tierFor(GAMES.lotto, [3]).fixed, 24);
+  assert.strictEqual(tierFor(GAMES.lotto, [3]).fixed, 35);
 });
 
 test('latest past draw', () => {
