@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d2b4a"/>
+      <stop offset="1" stop-color="#0a0f1c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#f2b84b" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f2b84b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glass" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.6" stop-color="#9cc8ff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#9cc8ff" stop-opacity="0.18"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe2a0"/>
+      <stop offset="0.5" stop-color="#f2b84b"/>
+      <stop offset="1" stop-color="#a86d10"/>
+    </linearGradient>
+    <radialGradient id="bGold" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#fff1c8"/><stop offset="0.45" stop-color="#f6be4f"/><stop offset="1" stop-color="#b0740f"/></radialGradient>
+    <radialGradient id="bBlue" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#d6e8ff"/><stop offset="0.45" stop-color="#4f9dff"/><stop offset="1" stop-color="#1b4f9e"/></radialGradient>
+    <radialGradient id="bRed" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#ffd3d8"/><stop offset="0.45" stop-color="#ef5b6b"/><stop offset="1" stop-color="#9c1f2e"/></radialGradient>
+    <radialGradient id="bGreen" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#d4f7e4"/><stop offset="0.45" stop-color="#3fbf7f"/><stop offset="1" stop-color="#1b7347"/></radialGradient>
+    <radialGradient id="bWhite" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#e3e8f0"/><stop offset="1" stop-color="#8d97a8"/></radialGradient>
+    <clipPath id="inside"><circle cx="256" cy="214" r="140"/></clipPath>
+  </defs>
+
+  <!-- tile -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="none" stroke="#f2b84b" stroke-opacity="0.35" stroke-width="4"/>
+  <circle cx="256" cy="214" r="200" fill="url(#glow)"/>
+
+  <!-- stand -->
+  <path d="M206 350 L306 350 L328 420 L184 420 Z" fill="url(#gold)"/>
+  <rect x="150" y="414" width="212" height="34" rx="14" fill="url(#gold)"/>
+  <rect x="150" y="414" width="212" height="8" rx="4" fill="#fff1c8" opacity="0.6"/>
+  <!-- exit tube -->
+  <rect x="241" y="340" width="30" height="40" rx="6" fill="#0f1830" stroke="#f2b84b" stroke-width="4"/>
+
+  <!-- balls inside the drum -->
+  <g clip-path="url(#inside)">
+    <circle cx="256" cy="214" r="140" fill="#0f1830" opacity="0.55"/>
+    <circle cx="190" cy="300" r="34" fill="url(#bBlue)"/>
+    <circle cx="258" cy="314" r="34" fill="url(#bWhite)"/>
+    <circle cx="326" cy="298" r="34" fill="url(#bRed)"/>
+    <circle cx="224" cy="250" r="34" fill="url(#bGreen)"/>
+    <circle cx="296" cy="244" r="34" fill="url(#bBlue)"/>
+    <circle cx="160" cy="236" r="30" fill="url(#bRed)"/>
+    <circle cx="352" cy="232" r="30" fill="url(#bWhite)"/>
+    <circle cx="300" cy="150" r="30" fill="url(#bGreen)" transform="rotate(-12 300 150)"/>
+    <circle cx="204" cy="164" r="28" fill="url(#bWhite)"/>
+  </g>
+  <!-- the drawn ball, flying -->
+  <circle cx="256" cy="182" r="46" fill="url(#bGold)"/>
+  <text x="256" y="200" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-weight="800" font-size="52" fill="#3a2600">7</text>
+
+  <!-- glass drum -->
+  <circle cx="256" cy="214" r="140" fill="url(#glass)"/>
+  <circle cx="256" cy="214" r="140" fill="none" stroke="url(#gold)" stroke-width="10"/>
+  <path d="M156 150 A120 120 0 0 1 236 92" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="10" stroke-linecap="round"/>
+  <!-- axle ring -->
+  <ellipse cx="256" cy="214" rx="140" ry="26" fill="none" stroke="#f2b84b" stroke-opacity="0.45" stroke-width="5"/>
+
+  <!-- sparkles -->
+  <path d="M410 92 l8 22 22 8 -22 8 -8 22 -8 -22 -22 -8 22 -8z" fill="#ffe2a0"/>
+  <path d="M96 118 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5z" fill="#ffe2a0" opacity="0.8"/>
+  <path d="M424 330 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#ffe2a0" opacity="0.7"/>
+</svg>

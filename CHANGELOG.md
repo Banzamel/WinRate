@@ -22,6 +22,7 @@ moves them into a numbered section automatically (see README → Releasing).
 - All data (history, settings, caches) is kept in the `data` folder inside the install folder; uninstalling
   removes everything, updates keep it.
 - Shorter README.
+- New app icon: a lottery draw machine.
 
 ### Fixed
 - The pair test no longer reports a fair history as unusual.
