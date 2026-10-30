@@ -1,7 +1,7 @@
 {
   "name": "winrate",
   "productName": "WinRate",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Windows desktop lottery lab for Lotto and Eurojackpot: full draw history, exact odds, statistics with significance tests, combination filters measured exactly, ticket generator and walk-forward simulations.",
   "main": "src/main/main.js",
   "author": "Rafał Polak (Banzamel)",
