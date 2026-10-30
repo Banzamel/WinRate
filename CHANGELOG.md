@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-30
+
 ### Changed
 - Generator: no "max common numbers" setting — tickets may share any numbers (identical tickets are still
   skipped). System bets keep all their combinations unique and choose numbers so as many as possible pass
@@ -98,7 +100,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/Banzamel/WinRate/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/Banzamel/WinRate/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/Banzamel/WinRate/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Banzamel/WinRate/compare/v0.2.0...v0.2.1
