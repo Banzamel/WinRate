@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-30
+
 ### Changed
 - "Until it hits" plays like a careful player: the numbers are drawn one by one (6–12 for Lotto systems), a
   ticket that breaks the filters is not played, and every played ticket is remembered so none is ever played
@@ -144,7 +146,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.9...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Banzamel/WinRate/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/Banzamel/WinRate/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/Banzamel/WinRate/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/Banzamel/WinRate/compare/v0.2.6...v0.2.7
