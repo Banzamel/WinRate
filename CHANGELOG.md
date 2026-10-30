@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
 ### Added
 - **Ball and machine physics**: empirical-Bayes estimate of every ball's chance (equal on a fair machine, so it
   never invents a bias), change-over-time test (new ball set or machine), memory between draws, runs test, and a
@@ -66,5 +68,6 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Banzamel/WinRate/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Banzamel/WinRate/releases/tag/v0.1.0
