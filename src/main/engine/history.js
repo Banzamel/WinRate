@@ -26,6 +26,7 @@ function validateDraw(game, draw) {
 //   "1. 27.01.1957 8,12,31,39,43,45"            (mbnet.com.pl)
 //   "2024-01-02;3;11;19;27;41;44"                (CSV)
 //   "6170. 29.10.2024 2,14,27,33,48,1,9"         (Eurojackpot: 5 main numbers, then 2 euro numbers)
+//   ";2026-10-27;;11,33,38,42,47;11,12;;"        (mbnet.com.pl/bazy/*.csv: number;date;time;main;extra;…)
 function parseLine(game, line) {
   const m = line.match(DATE_RE);
   if (!m) return null;

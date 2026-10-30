@@ -29,7 +29,8 @@ const GAMES = {
     typicalPrizes: { 5: 7500, 4: 200 },
     typicalJackpot: 15000000,
     typicalSales: 8000000,
-    sources: ['http://www.mbnet.com.pl/dl.txt'],
+    // mbnet.com.pl result databases; the old plain-text dl.txt stays as a fallback.
+    sources: ['https://www.mbnet.com.pl/bazy/lotto.csv', 'https://www.mbnet.com.pl/dl.txt'],
   },
   eurojackpot: {
     id: 'eurojackpot',
@@ -54,7 +55,8 @@ const GAMES = {
     typicalPrizes: { '5+1': 2500000, '5+0': 500000, '4+2': 20000, '4+1': 1000, '3+2': 400, '4+0': 400, '2+2': 80, '3+1': 80, '3+0': 70, '1+2': 40, '2+1': 35 },
     typicalJackpot: 200000000,
     typicalSales: 60000000,
-    sources: ['http://www.mbnet.com.pl/ej.txt'],
+    // The old ej.txt is gone (404 since the mbnet.com.pl redesign).
+    sources: ['https://www.mbnet.com.pl/bazy/eurojackpot.csv'],
   },
 };
 

@@ -199,6 +199,9 @@ function serveFile(root, rel) {
   return net.fetch(pathToFileURL(file).toString());
 }
 
+// Same id as the installer's shortcuts, so the taskbar shows the app's own icon and groups it with them.
+app.setAppUserModelId('pl.banzamel.winrate');
+
 app.whenReady().then(() => {
   if (!dataDirWritable()) {
     dialog.showErrorBox('WinRate', `The app keeps its data in its own folder, but it cannot write to:\n${DATA_DIR}\n\nReinstall it into a folder you can write to (the default one is), or run it as administrator.\n\nAplikacja przechowuje dane we własnym folderze, ale nie może zapisywać w:\n${DATA_DIR}\n\nZainstaluj ją ponownie w folderze z prawem zapisu (domyślny je ma) lub uruchom jako administrator.`);

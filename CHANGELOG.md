@@ -7,6 +7,11 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- Eurojackpot history downloads again: mbnet.com.pl moved its results to `bazy/eurojackpot.csv` (the old
+  `ej.txt` returns 404); Lotto uses `bazy/lotto.csv` with the old `dl.txt` as a fallback.
+- The app shows its own draw-machine icon on the taskbar, the window and `WinRate.exe` (it showed the Electron logo).
+
 ## [0.2.0] - 2026-10-30
 
 ### Added
