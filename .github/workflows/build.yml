@@ -1,0 +1,51 @@
+name: Build installer
+
+# Reusable: builds the Windows installer for a version tag and attaches it (with latest.yml, which
+# the installed apps read to update themselves) to the GitHub release of that tag.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+      notes:
+        description: Write the release body from CHANGELOG.md (false keeps a body written on GitHub).
+        type: boolean
+        default: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    concurrency:
+      group: release-${{ inputs.tag }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # The tag is the version: a release made on GitHub with a tag that package.json does not
+      # carry yet still builds with the tag's version.
+      - name: Version from tag
+        shell: bash
+        run: |
+          TAG="${{ inputs.tag }}"; TAG="${TAG#v}"
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$CURRENT" ]; then npm version "$TAG" --no-git-tag-version --allow-same-version; fi
+      - run: npm run fetch-history
+      - run: node scripts/version.js notes release-notes.md
+      - run: npx electron-builder --win nsis --publish never
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          files: |
+            dist/PrimeWinRate-Setup-*.exe
+            dist/PrimeWinRate-Setup-*.exe.blockmap
+            dist/latest.yml
+          body_path: ${{ inputs.notes && 'release-notes.md' || '' }}

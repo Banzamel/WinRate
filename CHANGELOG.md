@@ -7,6 +7,25 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Added
+- **Ball and machine physics**: empirical-Bayes estimate of every ball's chance (equal on a fair machine, so it
+  never invents a bias), change-over-time test (new ball set or machine), memory between draws, runs test, and a
+  calculator of what ball mass tolerances can do at most (terminal velocity, edge, draws needed to detect it).
+- **Expected value** of a ticket with jackpot sharing (Poisson), tax and the jackpot at which a ticket pays back.
+- **Popularity** of every ticket (how many others play it) and the strategies *Ball physics (Bayes)* and
+  *Unpopular tickets*.
+- **Abbreviated wheels** (systems): fewest tickets that guarantee a win of the chosen size.
+- **Automatic updates** from GitHub Releases.
+- One-click release: Actions → *Publish new version* raises the version, tags it and builds the installer.
+
+### Changed
+- All data (history, settings, caches) is kept in the `data` folder inside the install folder; uninstalling
+  removes everything, updates keep it.
+- Shorter README.
+
+### Fixed
+- The pair test no longer reports a fair history as unusual.
+
 ## [0.1.0] - 2026-10-30
 
 ### Added

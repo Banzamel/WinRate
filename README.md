@@ -1,131 +1,38 @@
+<p align="center"><img src="build/icon.png" width="120" alt="PrimeWinRate"></p>
+
 # PrimeWinRate
 
 [![Build & release](https://github.com/Banzamel/PrimeWinRate/actions/workflows/release.yml/badge.svg)](https://github.com/Banzamel/PrimeWinRate/actions/workflows/release.yml)
-[![Latest release](https://img.shields.io/github/v/release/Banzamel/PrimeWinRate)](https://github.com/Banzamel/PrimeWinRate/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/release/banzamel/primewinrate.svg)](https://github.com/Banzamel/PrimeWinRate/releases)
 
-A Windows desktop **lottery lab** for **Lotto** (Totalizator Sportowy, 6 of 49) and **Eurojackpot**
-(5 of 50 + 2 of 12). It keeps the full draw history, computes the exact odds, tests the history for patterns,
-filters combinations with exactly measured effects, generates tickets and replays the past in walk-forward
-simulations.
+Windows app for **Lotto** and **Eurojackpot**: full draw history, exact odds, statistics, filters, ticket
+generator and simulations on past draws. Polish and English.
 
-UI languages: **Polish** (default) and **English** — more can be added as language files.
+## Install
 
-> **Honest by design.** Every draw is independent and every combination is equally likely, so no software can
-> raise the chance of a ticket. PrimeWinRate measures everything it does against that fact: each filter shows
-> the exact share of combinations it removes *and* how many real winning draws it would have removed, and
-> every strategy is compared with a random player on the same draws. What filtering legitimately buys is
-> covering fewer combinations per shape you care about and avoiding the tickets thousands of people play
-> (so a win is not shared).
+1. Download `PrimeWinRate-Setup-<version>.exe` from [Releases](https://github.com/Banzamel/PrimeWinRate/releases/latest)
+2. Run it and pick the install folder (SmartScreen warning: **More info → Run anyway** — the app is not signed)
 
-## Download
+The app updates itself: when a new version is out it shows a banner — **Download**, then **Restart and install**.
 
-Get the installer from **[Releases](https://github.com/Banzamel/PrimeWinRate/releases/latest)**
-(`PrimeWinRate-Setup-<version>.exe`). The app is not code-signed, so Windows SmartScreen may warn on first
-launch — choose *More info → Run anyway*.
+## Use
 
-## Features
+Each game has its own tab:
 
-Each game has its own tab with six sections:
+- **Overview** — rules, draw days with a countdown, exact odds of every prize, expected value of a ticket
+- **History** — download all past draws, import a file, add a result by hand, export CSV
+- **Statistics** — is the draw fair? Number frequencies, hot/cold, gaps, pairs that "like" each other,
+  draw shapes vs. all combinations, ball/machine bias detection — each with a significance test
+- **Filters** — throw away unlikely and over-played shapes (all-even, 1-2-3-4-5-6, progressions, birthdays…);
+  shows exactly what share of combinations is removed and how many real draws would have survived
+- **Generator** — tickets from 9 strategies, popularity of each ticket, abbreviated wheels (systems)
+- **Simulation** — replay the past as if the future were unknown, or draw "until it hits" a past result
 
-### Overview
-- Rules, ticket price, draw days and time with a countdown to the next draw.
-- Exact odds of every prize tier (hypergeometric), odds of any prize, number of combinations.
-- Rule eras: Eurojackpot drew 2 Euro numbers of 8 (2012), of 10 (from October 2014) and of 12
-  (from 25 March 2022, together with the Tuesday draw). History is validated against the rules of each date.
+## Notes
 
-### History
-- **Download** the full history (from 1957 for Lotto), **import** text/CSV exports, **add a draw by hand**,
-  **export** to CSV. Stored locally; the installer ships with the history downloaded at build time.
-
-### Statistics — "is the draw fair?"
-Everything is compared with the exact expectation of a fair draw and tested with a chi-square test:
-- frequency of every number (and Euro number), hot and cold numbers in a chosen window, gaps ("overdue"),
-- **pairs**: which numbers came out together most and least often, pairs never drawn together,
-  neighbours (x, x+1), a heat map of all pairs,
-- **shapes** of the draws against the distribution over *all* combinations: odd/even, low/high, sum,
-  runs of consecutive numbers, arithmetic progressions, decades, last digits, coupon rows and columns, spread,
-- numbers repeated from the previous draw, identical draws in the history.
-
-### Filters (exclusions)
-Fifteen filters: odd/even, low/high, sum range, consecutive runs, arithmetic progressions, one decade,
-same last digit, coupon row, coupon column, minimum spread, dates only (1–31), past results (exact repeats
-and optionally tickets one number away), overlap with the previous draw, number weight and pair weight.
-
-The app walks through **every** combination (13 983 816 for Lotto, 2 118 760 main combinations for
-Eurojackpot), so the share each filter removes is exact. It also replays the history to count how many
-real draws each filter would have removed — checking every draw with only the draws known before it —
-and shows the **efficiency** (kept draws ÷ kept combinations; 1.00 = no edge, which is what a fair draw gives).
-The recommended preset removes about **32 %** of Lotto and **28 %** of Eurojackpot combinations.
-
-### Generator
-Tickets for the next draw with one of seven strategies — pure random, random within the filters, hot,
-cold, overdue, most frequent, pair affinity — always within the active filters.
-
-### Simulation
-- **Backtest (walk-forward):** for each of the last N draws only the earlier ones are known; the strategy
-  plays K tickets, scored against the real result next to a random player with the same tickets.
-- **Until it hits:** for each of the latest draws the app (knowing only the earlier draws) keeps drawing
-  tickets until one matches the real result, and reports the attempts, their cost and how many years of
-  play they represent — or that the filters had removed the winning numbers.
-
-## Development
-
-Requirements: Node.js 22, Windows for building the installer (the app itself also runs on Linux/macOS).
-
-```bash
-npm install
-npm start          # run the app
-npm test           # unit tests (node --test)
-npm run dist       # download the history and build dist/PrimeWinRate-Setup-<version>.exe
-```
-
-`PRIMEWINRATE_USERDATA=<dir>` keeps settings and history of a development run apart from the real ones.
-
-### Project layout
-
-```
-src/main/            Electron main process
-  engine/            pure, tested logic (no Electron)
-    combinatorics.js   binomials, ranking/unranking and enumeration of combinations
-    games.js           rules, eras, schedule, prize tiers, exact odds
-    history.js         parsing, validation and the JSON store of draws
-    filters.js         pattern metrics, filters, exact census of all combinations
-    stats.js           frequencies, pairs, patterns, chi-square tests
-    simulate.js        seeded RNG, strategies, generator, backtest, until-hit
-  worker.js          heavy computations in a worker thread
-src/renderer/        UI (plain ES modules, no framework)
-  lang/              translations (pl.json, en.json)
-scripts/             build helpers (history download, icon, versioning)
-test/                unit tests
-```
-
-### Adding a language
-Copy `src/renderer/lang/en.json` to `src/renderer/lang/<code>.json`, translate the values and add the code
-to `LANGUAGES` in `src/renderer/js/i18n.js`.
-
-## Releasing
-
-Versions follow SemVer; `package.json` is the source of truth and `CHANGELOG.md` holds the notes.
-
-1. Add the changes under `## [Unreleased]` in `CHANGELOG.md`.
-2. Run `npm run release:patch` (or `release:minor` / `release:major`), then
-   `git push --follow-tags`.
-
-The tag starts the GitHub Actions workflow, which runs the tests, builds the Windows installer and publishes
-it as a GitHub release. Publishing a release on GitHub with a new `v*` tag works too: the workflow builds the
-installer with the tag's version and attaches it to that release.
-
-## Data sources
-
-The history is downloaded from the public result files at mbnet.com.pl (Lotto since 1957, Eurojackpot
-since 2012). If a source changes, use *Import file* with any text or CSV export (`date;numbers…`).
-
-## Responsible play
-
-This is a statistics and education tool; it does not predict draws. Play only with money you can afford to
-lose. In Poland, help with gambling problems: 801 889 880.
-
-## License
-
-[MIT](LICENSE) © Rafał Polak (Banzamel)
+- Every combination has the same chance in every draw — the app measures that honestly instead of promising wins.
+  Its real gains: fewer tickets per covered shape, and tickets few others play (a win is shared less).
+- All data is stored in the `data` folder inside the install folder; uninstalling removes everything.
+- Play responsibly — help with gambling problems in Poland: 801 889 880.
+- Changes in each version: [Releases](https://github.com/Banzamel/PrimeWinRate/releases) ·
+  new version: Actions → **Publish new version** → Run workflow.

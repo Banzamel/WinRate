@@ -5,6 +5,7 @@ import { el } from './ui.js';
 import { renderGame } from '../views/game.js';
 import { renderSettings } from '../views/settings.js';
 import { renderAbout } from '../views/about.js';
+import { renderUpdateBanner } from './update.js';
 
 const NAV = ['lotto', 'eurojackpot', 'about', 'settings'];
 const ICONS = {
@@ -46,6 +47,7 @@ export async function setLanguage(lang) {
   state.settings = await window.api.setSettings({ language: lang });
   await loadLanguage(lang);
   translateDom();
+  renderUpdateBanner();
   renderNav();
   render();
 }
@@ -57,11 +59,14 @@ async function boot() {
   state.games = Object.fromEntries(init.games.map((g) => [g.id, g]));
   state.filters = init.filters;
   state.strategies = init.strategies;
+  state.appUpdate = init.appUpdate;
   await loadLanguage(state.settings.language || 'pl');
   translateDom();
   document.querySelectorAll('[data-win]').forEach((b) => b.addEventListener('click', () => window.api.window(b.dataset.win)));
   window.api.onProgress((p) => { state.jobs[p.lane] = p; renderJobs(); emit({ type: 'progress', ...p }); });
   subscribe((e) => { if (e.type === 'done') { delete state.jobs[e.lane]; renderJobs(); } });
+  window.api.onAppUpdate((u) => { state.appUpdate = u; renderUpdateBanner(); emit({ type: 'appUpdate' }); });
+  renderUpdateBanner();
   renderNav();
   render();
 }

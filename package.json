@@ -67,8 +67,21 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "PrimeWinRate"
+      "shortcutName": "PrimeWinRate",
+      "include": "build/installer.nsh",
+      "deleteAppDataOnUninstall": true
     },
-    "artifactName": "PrimeWinRate-Setup-${version}.${ext}"
+    "artifactName": "PrimeWinRate-Setup-${version}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Banzamel",
+        "repo": "PrimeWinRate",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }

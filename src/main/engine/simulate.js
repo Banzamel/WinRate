@@ -8,6 +8,8 @@
 const { binom, rank, unrank } = require('./combinatorics');
 const { currentEra, tierFor } = require('./games');
 const { FILTERS, HistoryContext, splitConfig, createChecker, census, isAllowed } = require('./filters');
+const { posterior } = require('./bias');
+const { createScorer } = require('./popularity');
 
 // xoshiro128** — fast and seedable; without a seed the state comes from crypto.
 function createRng(seed) {
@@ -36,12 +38,20 @@ function createRng(seed) {
   return { next, int: (n) => Math.floor(next() * n) };
 }
 
-const STRATEGIES = ['random', 'filtered', 'hot', 'cold', 'overdue', 'frequent', 'pairs'];
+const STRATEGIES = ['random', 'filtered', 'bayes', 'unpopular', 'hot', 'cold', 'overdue', 'frequent', 'pairs'];
+// Candidates per ticket of the "unpopular" strategy (the least popular one is kept).
+const UNPOPULAR_CANDIDATES = 12;
 
 // Per-number weights of a strategy for one pool, from the history known so far.
 // recent: window (draws) of the hot/cold strategies.
-function numberWeights(strategy, size, pick, draws, recent = 50) {
+function numberWeights(strategy, size, pick, draws, recent = 50, halfLife = 0) {
   const w = new Float64Array(size + 1);
+  if (strategy === 'bayes') {
+    // Estimated physical chance of each ball (empirical Bayes; equal for a fair machine).
+    const post = posterior(size, pick, draws, { halfLife });
+    for (const x of post.numbers) w[x.n] = x.p;
+    return w;
+  }
   const count = new Float64Array(size + 1);
   const recentCount = new Float64Array(size + 1);
   const lastSeen = new Float64Array(size + 1).fill(-1);
@@ -80,7 +90,7 @@ function weightedPick(rng, weights, size, pick, affinity, out = new Array(pick))
 // A ticket source for one game: next() returns { pools, ranks } or null after too many rejections.
 // fixed: census of the history-independent filters (bitset), shared between draws;
 // ctx: HistoryContext for the history filters and the pair strategy.
-function createPlayer(game, { strategy, config, fixed, ctx, draws, rng, recent }) {
+function createPlayer(game, { strategy, config, fixed, ctx, draws, rng, recent, halfLife }) {
   const era = currentEra(game);
   const pools = era.pools;
   const main = pools[0];
@@ -89,8 +99,9 @@ function createPlayer(game, { strategy, config, fixed, ctx, draws, rng, recent }
   const { dynamic } = useFilters ? splitConfig(config) : { dynamic: null };
   const dynamicActive = dynamic && Object.values(dynamic).some((v) => v !== null && v !== undefined && v !== false);
   const checkDynamic = dynamicActive ? createChecker(main, game.slipColumns, dynamic, ctx) : null;
-  const uniform = strategy === 'random' || strategy === 'filtered';
-  const weights = pools.map((p, i) => (uniform ? null : numberWeights(strategy, p.size, p.pick, draws.map((d) => d.pools[i]), recent)));
+  const uniform = strategy === 'random' || strategy === 'filtered' || strategy === 'unpopular';
+  const weights = pools.map((p, i) => (uniform ? null : numberWeights(strategy, p.size, p.pick, draws.map((d) => d.pools[i]), recent, halfLife)));
+  const popularity = strategy === 'unpopular' ? createScorer(main, game.slipColumns, draws.length ? draws[draws.length - 1].pools[0] : []) : null;
   let affinity = null;
   if (strategy === 'pairs' && ctx) {
     ctx.scores();
@@ -117,8 +128,18 @@ function createPlayer(game, { strategy, config, fixed, ctx, draws, rng, recent }
     total,
     // Fast path for untilHit: only the ranks.
     nextRanks() {
-      const r = nextMain();
+      let r = nextMain();
       if (r < 0) return null;
+      if (popularity) {
+        // Keep the least popular of several valid candidates: same chance, fewer people to share with.
+        let best = popularity(unrank(r, main.pick));
+        for (let i = 1; i < UNPOPULAR_CANDIDATES; i++) {
+          const c = nextMain();
+          if (c < 0) break;
+          const s = popularity(unrank(c, main.pick));
+          if (s < best) { best = s; r = c; }
+        }
+      }
       const ranks = [r];
       for (let i = 1; i < pools.length; i++) {
         const p = pools[i];
@@ -146,10 +167,10 @@ function fixedCensus(game, config, onProgress) {
 }
 
 // Tickets for the next draw.
-function generate(game, draws, { strategy = 'filtered', config, count = 5, seed, recent = 50, fixed } = {}) {
+function generate(game, draws, { strategy = 'filtered', config, count = 5, seed, recent = 50, halfLife = 0, fixed } = {}) {
   const era = eraDraws(game, draws);
   const ctx = new HistoryContext(currentEra(game).pools[0], era.map((d) => d.pools[0]));
-  const player = createPlayer(game, { strategy, config, fixed: fixed || (strategy !== 'random' ? fixedCensus(game, config) : null), ctx, draws: era, rng: createRng(seed), recent });
+  const player = createPlayer(game, { strategy, config, fixed: fixed || (strategy !== 'random' ? fixedCensus(game, config) : null), ctx, draws: era, rng: createRng(seed), recent, halfLife });
   const seen = new Set(); const tickets = [];
   for (let i = 0; i < count * 50 && tickets.length < count; i++) {
     const t = player.next();
@@ -158,11 +179,12 @@ function generate(game, draws, { strategy = 'filtered', config, count = 5, seed,
     if (seen.has(key)) continue;
     seen.add(key); tickets.push(t.pools);
   }
-  return { tickets };
+  const score = createScorer(currentEra(game).pools[0], game.slipColumns, era.length ? era[era.length - 1].pools[0] : []);
+  return { tickets, popularity: tickets.map((tk) => score(tk[0])) };
 }
 
 // Walk-forward backtest over the last `tests` draws.
-function backtest(game, draws, { strategy = 'filtered', config, tickets = 10, tests = 100, seed, recent = 50, fixed, onProgress } = {}) {
+function backtest(game, draws, { strategy = 'filtered', config, tickets = 10, tests = 100, seed, recent = 50, halfLife = 0, fixed, onProgress } = {}) {
   const era = eraDraws(game, draws);
   const main = currentEra(game).pools[0];
   const start = Math.max(1, era.length - tests);
@@ -185,7 +207,7 @@ function backtest(game, draws, { strategy = 'filtered', config, tickets = 10, te
   for (let t = start; t < era.length; t++) {
     const known = era.slice(0, t);
     const draw = era[t];
-    const player = createPlayer(game, { strategy, config, fixed: fixedSet, ctx, draws: known, rng, recent });
+    const player = createPlayer(game, { strategy, config, fixed: fixedSet, ctx, draws: known, rng, recent, halfLife });
     const randomPlayer = createPlayer(game, { strategy: 'random', ctx, draws: known, rng });
     for (let i = 0; i < tickets; i++) {
       const a = player.next(); if (a) score(result.strategy, a.pools, draw);
@@ -200,7 +222,7 @@ function backtest(game, draws, { strategy = 'filtered', config, tickets = 10, te
 }
 
 // Draws tickets for the past draw `index` (into the current-era list) until one matches it fully.
-function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttempts = 2e8, seed, recent = 50, fixed, onProgress, shouldStop } = {}) {
+function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttempts = 2e8, seed, recent = 50, halfLife = 0, fixed, onProgress, shouldStop } = {}) {
   const era = eraDraws(game, draws);
   if (index < 0) index += era.length;
   const target = era[index];
@@ -224,7 +246,7 @@ function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttemp
     FILTERS.forEach((flt, i) => { if (mask & (1 << i)) failed.push(flt.id); });
     if (failed.length) return { ...base, excluded: true, failed, attempts: 0 };
   }
-  const player = createPlayer(game, { strategy, config, fixed: fixedSet, ctx, draws: known, rng: createRng(seed), recent });
+  const player = createPlayer(game, { strategy, config, fixed: fixedSet, ctx, draws: known, rng: createRng(seed), recent, halfLife });
   const allowedMain = strategy === 'random' || !fixedSet ? binom(main.size, main.pick) : fixedSet.allowedCount;
   const expectedUniform = pools.slice(1).reduce((n, p) => n * binom(p.size, p.pick), allowedMain);
   const started = Date.now();

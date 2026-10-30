@@ -47,7 +47,8 @@ input:focus, select:focus { outline: 1px solid var(--gold); }
 .window-controls .close:hover { background: var(--red); }
 
 /* Layout */
-.shell { display: flex; height: calc(100% - 40px); }
+body { display: flex; flex-direction: column; }
+.shell { display: flex; flex: 1; min-height: 0; }
 .sidebar { width: 190px; background: var(--bg-1); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 10px 8px; gap: 4px; }
 .nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: var(--radius); background: none; color: var(--muted); cursor: pointer; text-align: left; font-weight: 600; }
 .nav-btn svg { width: 20px; height: 20px; }
@@ -174,3 +175,16 @@ ul.plain { margin: 0; padding-left: 18px; }
 ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 5px; }
 .table .balls { flex-wrap: nowrap; }
 .sim-cards { display: flex; flex-direction: column; gap: 16px; }
+.num.wide { width: 150px; }
+.pop { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+.pop.good { color: var(--green); border-color: var(--green); }
+.pop.bad { color: var(--red); border-color: var(--red); }
+.picker { display: grid; grid-template-columns: repeat(10, 34px); gap: 6px; margin: 8px 0 12px; }
+.ball.pick { border: 0; cursor: pointer; background: var(--bg-3); color: var(--muted); }
+.ball.pick.on { color: #2a1c00; background: radial-gradient(circle at 35% 30%, var(--gold-hi), var(--gold) 60%, #b07a14); }
+.bias-pool + .bias-pool { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
+details summary { cursor: pointer; color: var(--muted); margin: 6px 0; }
+.update-banner { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 6px 16px; font-size: 13px; background: rgba(242, 184, 75, .14); border-bottom: 1px solid var(--gold); color: var(--gold-hi); }
+.update-banner[hidden] { display: none; }
+.btn.small { padding: 3px 10px; font-size: 12px; }
+.row-actions { display: flex; gap: 8px; margin-top: 8px; }

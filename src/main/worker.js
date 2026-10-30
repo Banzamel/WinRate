@@ -5,6 +5,9 @@ const { getGame, currentEra } = require('./engine/games');
 const filters = require('./engine/filters');
 const stats = require('./engine/stats');
 const sim = require('./engine/simulate');
+const popularity = require('./engine/popularity');
+const { wheel } = require('./engine/wheel');
+const { tierOdds, combinationCount } = require('./engine/games');
 
 // The census of the history-independent filters is reused while the settings stay the same.
 const cache = new Map();
@@ -24,9 +27,29 @@ const TASKS = {
     return filters.distributions(currentEra(g).pools[0], g.slipColumns, { onProgress: progress });
   },
 
-  report({ game, draws, dist, recent }) {
+  report({ game, draws, dist, recent, halfLife }) {
     const g = getGame(game);
-    return stats.report(g, sim.eraDraws(g, draws), dist, { recent });
+    return stats.report(g, sim.eraDraws(g, draws), dist, { recent, halfLife });
+  },
+
+  // Expected value of an average ticket and of a given one (or the least popular shape).
+  ev({ game, draws, jackpot, sold, prizes, ticket }) {
+    const g = getGame(game);
+    const era = sim.eraDraws(g, draws);
+    const info = { ...g, tiers: tierOdds(g), combinations: combinationCount(g) };
+    const score = popularity.createScorer(currentEra(g).pools[0], g.slipColumns, era.length ? era[era.length - 1].pools[0] : []);
+    const pop = ticket ? score(ticket) : null;
+    return {
+      average: popularity.expectedValue(info, { jackpot, sold, prizes, popularity: 1 }),
+      unpopular: popularity.expectedValue(info, { jackpot, sold, prizes, popularity: 0.3 }),
+      ticket: ticket ? { popularity: pop, ...popularity.expectedValue(info, { jackpot, sold, prizes, popularity: pop }) } : null,
+    };
+  },
+
+  wheel({ game, numbers, guarantee }) {
+    const g = getGame(game);
+    const k = currentEra(g).pools[0].pick;
+    return wheel(numbers, k, guarantee);
   },
 
   // Exact share of combinations removed (alone and together) plus how the real draws fared.
@@ -40,25 +63,25 @@ const TASKS = {
     return { total: all.total, allowedCount: all.allowedCount, filters: all.filters, survival };
   },
 
-  generate({ game, draws, strategy, config, count, recent }, progress) {
+  generate({ game, draws, strategy, config, count, recent, halfLife }, progress) {
     const g = getGame(game);
-    return sim.generate(g, draws, { strategy, config, count, recent, fixed: strategy === 'random' ? null : fixedFor(g, config, progress) });
+    return sim.generate(g, draws, { strategy, config, count, recent, halfLife, fixed: strategy === 'random' ? null : fixedFor(g, config, progress) });
   },
 
-  backtest({ game, draws, strategy, config, tickets, tests, recent }, progress) {
+  backtest({ game, draws, strategy, config, tickets, tests, recent, halfLife }, progress) {
     const g = getGame(game);
     const fixed = strategy === 'random' ? null : fixedFor(g, config);
-    return sim.backtest(g, draws, { strategy, config, tickets, tests, recent, fixed, onProgress: progress });
+    return sim.backtest(g, draws, { strategy, config, tickets, tests, recent, halfLife, fixed, onProgress: progress });
   },
 
   // One or more past draws, each played "until it hits".
-  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent }, progress) {
+  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife }, progress) {
     const g = getGame(game);
     const fixed = strategy === 'random' ? null : fixedFor(g, config);
     const results = [];
     targets.forEach((index, i) => {
       results.push(sim.untilHit(g, draws, {
-        index, strategy, config, maxAttempts, recent, fixed,
+        index, strategy, config, maxAttempts, recent, halfLife, fixed,
         onProgress: (p, attempts) => progress((i + p) / targets.length, { target: i, attempts }),
       }));
       progress((i + 1) / targets.length, { target: i, done: results[i] });

@@ -2,8 +2,9 @@
 // each against the exact expectation of a fair draw, with a chi-square test.
 import { t, num, pct, date } from '../js/i18n.js';
 import { state } from '../js/store.js';
-import { el, card, hint, table, ball, balls, compareBars, numberChart, fitBadge, spinner, numberInput } from '../js/ui.js';
+import { el, card, hint, table, ball, balls, compareBars, numberChart, fitBadge, spinner, numberInput, select } from '../js/ui.js';
 import { runJob } from './game.js';
+import { ballEffect } from '../js/physics.js';
 
 export function renderStats(body, id) {
   const report = state.report[id];
@@ -27,6 +28,8 @@ export function renderStats(body, id) {
         verdictRow(t('stats.v.repeats'), report.repeats.fit),
         report.patterns ? Object.entries(report.patterns).map(([metric, p]) => verdictRow(t(`metric.${metric}`), p.fit)) : null),
       hint(t('stats.verdictHint'))),
+    report.bias && report.bias[0] ? biasCard(report, game, draws) : null,
+    physicsCard(game),
     ...report.pools.map((pool, i) => card(t(i ? 'stats.freqExtra' : 'stats.freq'),
       numberChart(pool.numbers.map((x) => ({ n: x.n, value: x.count, z: x.z })), pool.expected, { extra: i > 0 }),
       hint(t('stats.freqHint', { expected: num(pool.expected, 1) })))),
@@ -51,6 +54,35 @@ export function renderStats(body, id) {
           : el('p', {}, t('stats.noSameDraws')),
         hint(t('stats.sameDrawsHint', { combos: num(report.combinations), draws: num(report.draws), chance: pct(1 - Math.exp(-(report.draws * (report.draws - 1)) / 2 / report.combinations), 2) })))),
   );
+}
+
+// Physics: are some balls more likely, did anything change over time, does the machine remember?
+function biasCard(report, game, draws) {
+  const era = draws.filter((d) => d.date >= game.eras[game.eras.length - 1].from);
+  const pTone = (p) => (p < 0.01 ? 'bad' : p < 0.05 ? 'warn' : 'good');
+  const pBadge = (p) => el('span', { class: `fit ${pTone(p)}` }, `p ${p < 0.0001 ? `< ${num(0.0001, 4)}` : `= ${num(p, 4)}`} · ${t(`stats.fit.${pTone(p)}`)}`);
+  return card(t('bias.title'),
+    el('p', {}, t('bias.intro')),
+    ...report.bias.map((b, i) => {
+      if (!b) return null;
+      const post = b.posterior;
+      const top = [...post.numbers].sort((x, y) => y.observed - x.observed).slice(0, 6);
+      const minMem = b.memory.reduce((m, l) => (l.p < m.p ? l : m), b.memory[0]);
+      return el('div', { class: 'bias-pool' },
+        report.bias.length > 1 ? el('h3', {}, t(i ? 'bias.extraPool' : 'bias.mainPool')) : null,
+        el('div', { class: 'verdicts' },
+          el('div', { class: 'verdict' }, el('span', {}, t('bias.balls')), el('span', { class: `fit ${post.shrink > 0.2 ? 'warn' : 'good'}` }, t('bias.signal', { pct: pct(post.shrink, 0) }))),
+          el('div', { class: 'verdict' }, el('span', {}, t('bias.drift')), pBadge(b.drift.overall)),
+          minMem ? el('div', { class: 'verdict' }, el('span', {}, t('bias.memory', { lag: minMem.lag })), pBadge(Math.min(1, minMem.p * b.memory.length))) : null,
+          b.runs ? el('div', { class: 'verdict' }, el('span', {}, t('bias.runs')), pBadge(b.runs.p)) : null),
+        el('div', { class: 'grid-2' },
+          el('div', {}, el('h3', {}, t('bias.estimate')),
+            table([t('stats.number'), t('bias.observed'), t('bias.estimated'), t('bias.edge')], top.map((x) => [ball(x.n, { small: true, extra: i > 0 }), pct(x.observed, 2), pct(x.p, 2), `${x.edge >= 0 ? '+' : ''}${pct(x.edge, 2)}`])),
+            el('p', { class: b.best.edge > 1.05 ? 'warn' : '' }, t('bias.bestTicket', { edge: num(b.best.edge, 3) }))),
+          el('div', {}, el('h3', {}, t('bias.changes')),
+            table([t('stats.number'), t('bias.since'), t('bias.before'), t('bias.after'), 'p'], b.drift.numbers.slice(0, 6).map((x) => [ball(x.n, { small: true, extra: i > 0 }), era[x.at] ? date(era[x.at].date) : '–', pct(x.before, 1), x.after === null ? '–' : pct(x.after, 1), num(x.p, 3)])))));
+    }),
+    hint(t('bias.hint')));
 }
 
 const verdictRow = (label, fit) => el('div', { class: 'verdict' }, el('span', {}, label), fitBadge(fit));
@@ -107,4 +139,33 @@ function bucketize(p, width) {
     row.observed += p.observed[i]; row.expected += p.expected[i];
   });
   return rows.filter((r) => r.expected >= 0.05 || r.observed);
+}
+
+// What ball tolerances could do at most, from published regulations (mass spread of a set).
+const BALL_SETS = [
+  { id: 'nz', massG: 12, spreadG: 0.45, diameterMm: 50 }, // Lotto NZ: 11–13 g, set spread ≤ 0.45 g
+  { id: 'texas', massG: 2.7, spreadG: 0.19, diameterMm: 40 }, // Texas: ping-pong style, ±0.095 g of the set average
+];
+function physicsCard(game) {
+  const pool = game.pools[0];
+  const opts = { ...BALL_SETS[0], sensitivity: 0.5 };
+  const out = el('div', { class: 'result' });
+  const update = () => {
+    const r = ballEffect({ ...opts, size: pool.size, pick: pool.pick, drawsPerYear: game.drawsPerYear });
+    out.replaceChildren(
+      el('div', { class: 'stats-row' },
+        el('div', { class: 'stat' }, el('span', { class: 'stat-label' }, t('physics.velocity')), el('strong', {}, `${num(r.vAvg, 2)} m/s`), el('span', { class: 'stat-sub' }, t('physics.velocityLight', { v: num(r.vLight, 2) }))),
+        el('div', { class: 'stat' }, el('span', { class: 'stat-label' }, t('physics.edge')), el('strong', {}, `+${pct(r.edge, 2)}`), el('span', { class: 'stat-sub' }, t('physics.edgeSub'))),
+        el('div', { class: 'stat' }, el('span', { class: 'stat-label' }, t('physics.ticket')), el('strong', {}, `×${num(r.ticketEdge, 3)}`), el('span', { class: 'stat-sub' }, t('physics.ticketSub', { k: pool.pick }))),
+        el('div', { class: 'stat' }, el('span', { class: 'stat-label' }, t('physics.detect')), el('strong', {}, num(r.drawsToDetect)), el('span', { class: 'stat-sub' }, t('physics.years', { years: num(r.yearsToDetect) })))),
+      el('p', {}, t('physics.summary', { edge: pct(r.edge, 2), draws: num(r.drawsToDetect), years: num(r.yearsToDetect) })));
+  };
+  const input = (key, label, step) => el('label', {}, label, numberInput(opts[key], { step, min: 0, onChange: (v) => { opts[key] = v || 0; update(); } }));
+  const form = el('div', { class: 'form-row' });
+  const fill = () => form.replaceChildren(
+    el('label', {}, t('physics.preset'), select(opts.id, BALL_SETS.map((s) => [s.id, t(`physics.set.${s.id}`)]), (v) => { Object.assign(opts, BALL_SETS.find((s) => s.id === v)); fill(); update(); })),
+    input('massG', t('physics.mass'), 0.1), input('spreadG', t('physics.spread'), 0.01), input('diameterMm', t('physics.diameter'), 1),
+    el('label', {}, t('physics.sensitivity'), select(opts.sensitivity, [[0.5, t('physics.beta.half')], [1, t('physics.beta.one')], [2, t('physics.beta.two')]], (v) => { opts.sensitivity = Number(v); update(); })));
+  fill(); update();
+  return card(t('physics.title'), el('p', {}, t('physics.intro')), form, out, hint(t('physics.hint')));
 }

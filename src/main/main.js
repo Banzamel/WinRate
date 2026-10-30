@@ -9,9 +9,26 @@ const { GAMES, getGame, currentEra, tierOdds, combinationCount, anyPrizeProbabil
 const { HistoryStore, parseText, download, validateDraw } = require('./engine/history');
 const { defaultFilters, FILTERS } = require('./engine/filters');
 const { STRATEGIES } = require('./engine/simulate');
+const { setupAppUpdater } = require('./app-updater');
 
-// Development: PRIMEWINRATE_USERDATA=<dir> keeps settings and history apart from the real ones.
-if (process.env.PRIMEWINRATE_USERDATA) app.setPath('userData', process.env.PRIMEWINRATE_USERDATA);
+// All data stays in one folder: <install folder>/data in the installed app (the uninstaller removes
+// it), PRIMEWINRATE_USERDATA=<dir> in development. Chromium caches and logs go there too.
+const DATA_DIR = process.env.PRIMEWINRATE_USERDATA || (app.isPackaged ? path.join(path.dirname(process.execPath), 'data') : null);
+if (DATA_DIR) for (const key of ['userData', 'sessionData', 'logs', 'crashDumps']) app.setPath(key, key === 'userData' || key === 'sessionData' ? DATA_DIR : path.join(DATA_DIR, key));
+
+// The install folder has to be writable (data never goes anywhere else).
+function dataDirWritable() {
+  if (!DATA_DIR) return true;
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    const probe = path.join(DATA_DIR, '.write-test');
+    fs.writeFileSync(probe, '');
+    fs.unlinkSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const ROOT = path.join(__dirname, '..', '..');
 const RENDERER_DIR = path.join(__dirname, '..', 'renderer');
@@ -21,6 +38,7 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: t
 
 let win = null;
 let settings = null;
+let updater = null;
 const stores = {};
 const send = (channel, payload) => { if (win && !win.isDestroyed()) win.webContents.send(channel, payload); };
 const jobs = new Jobs((p) => send('job:progress', p));
@@ -45,6 +63,7 @@ function gameInfo(id) {
     tiers: tierOdds(game), combinations: combinationCount(game), anyPrize: anyPrizeProbability(game),
     nextDraws: nextDraws(game, new Date(), 4).map((d) => d.toISOString()), drawsPerYear: drawsPerYear(game),
     defaultFilters: defaultFilters(currentEra(game).pools[0]), sources: game.sources,
+    typicalPrizes: game.typicalPrizes, typicalJackpot: game.typicalJackpot, typicalSales: game.typicalSales,
   };
 }
 
@@ -84,7 +103,11 @@ function registerIpc() {
     games: Object.keys(GAMES).map(gameInfo),
     filters: FILTERS.map((f) => ({ id: f.id, kind: f.kind })),
     strategies: STRATEGIES,
+    appUpdate: updater.status(),
   }));
+  ipcMain.handle('update:check', () => updater.check());
+  ipcMain.handle('update:download', () => updater.download());
+  ipcMain.handle('update:install', () => updater.install());
   ipcMain.handle('game:info', (_e, id) => gameInfo(id));
   ipcMain.handle('settings:set', (_e, patch) => settings.set(patch));
   ipcMain.handle('settings:setGame', (_e, id, patch) => settings.setGame(id, patch));
@@ -123,12 +146,14 @@ function registerIpc() {
   const draws = (id) => stores[id].list();
   ipcMain.handle('engine:report', async (_e, id, opts = {}) => {
     const dist = await distributionsFor(id);
-    return jobs.run('stats', 'report', { game: id, draws: draws(id), dist, recent: opts.recent || 50 });
+    return jobs.run('stats', 'report', { game: id, draws: draws(id), dist, recent: opts.recent || 50, halfLife: opts.halfLife || 0 });
   });
   ipcMain.handle('engine:filters', (_e, id, config) => jobs.run('filters', 'filters', { game: id, draws: draws(id), config: config || configFor(id) }));
   ipcMain.handle('engine:generate', (_e, id, opts) => jobs.run('generate', 'generate', { game: id, draws: draws(id), config: configFor(id), ...opts }));
   ipcMain.handle('engine:backtest', (_e, id, opts) => jobs.run('sim', 'backtest', { game: id, draws: draws(id), config: configFor(id), ...opts }));
   ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts }));
+  ipcMain.handle('engine:ev', (_e, id, opts) => jobs.run('ev', 'ev', { game: id, draws: draws(id), ...opts }));
+  ipcMain.handle('engine:wheel', (_e, id, opts) => jobs.run('generate', 'wheel', { game: id, ...opts }));
   ipcMain.handle('job:cancel', (_e, lane) => jobs.cancel(lane));
 
   ipcMain.handle('win:action', (_e, action) => {
@@ -149,6 +174,11 @@ function serveFile(root, rel) {
 }
 
 app.whenReady().then(() => {
+  if (!dataDirWritable()) {
+    dialog.showErrorBox('PrimeWinRate', `The app keeps its data in its own folder, but it cannot write to:\n${DATA_DIR}\n\nReinstall it into a folder you can write to (the default one is), or run it as administrator.\n\nAplikacja przechowuje dane we własnym folderze, ale nie może zapisywać w:\n${DATA_DIR}\n\nZainstaluj ją ponownie w folderze z prawem zapisu (domyślny je ma) lub uruchom jako administrator.`);
+    app.quit();
+    return;
+  }
   settings = new Settings(app.getPath('userData'));
   openStores();
   protocol.handle('app', (request) => {
@@ -157,6 +187,7 @@ app.whenReady().then(() => {
     if (url.host === 'ui') return serveFile(RENDERER_DIR, rel);
     return new Response('Not found', { status: 404 });
   });
+  updater = setupAppUpdater(send);
   registerIpc();
   createWindow();
 });

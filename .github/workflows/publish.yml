@@ -1,0 +1,45 @@
+name: Publish new version
+
+# One click in Actions → "Publish new version" → Run workflow: raises the version (patch / minor /
+# major), moves the "Unreleased" notes of CHANGELOG.md into the new version, commits and tags it on
+# main, builds the installer and publishes the release. Installed apps then offer the update.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version step
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version ${{ inputs.bump }} -m "Release v%s"
+          echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          git push origin main --follow-tags
+
+  installer:
+    needs: version
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ needs.version.outputs.tag }}

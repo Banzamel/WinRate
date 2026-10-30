@@ -17,9 +17,11 @@ function stamp() {
   const log = fs.readFileSync(changelogPath, 'utf8');
   if (log.includes(`## [${pkg.version}]`)) return console.log(`CHANGELOG already has ${pkg.version}`);
   const m = log.match(/## \[Unreleased\]\s*\n([\s\S]*?)(?=\n## \[|\n\[[^\]]+\]: |$)/);
-  if (!m || !m[1].trim()) fail('CHANGELOG.md: add your changes under "## [Unreleased]" before bumping the version.');
+  if (!m) fail('CHANGELOG.md has no "## [Unreleased]" section.');
+  // An empty Unreleased section still makes a release (e.g. the one-click publish workflow).
+  const notes = m[1].trim() || '### Changed\n- Fixes and improvements.';
   const date = new Date().toLocaleDateString('sv-SE'); // local YYYY-MM-DD
-  let next = log.replace(m[0], `## [Unreleased]\n\n## [${pkg.version}] - ${date}\n\n${m[1].trim()}\n`);
+  let next = log.replace(m[0], `## [Unreleased]\n\n## [${pkg.version}] - ${date}\n\n${notes}\n`);
   next = next.replace(/^\[Unreleased\]: .*$/m, `[Unreleased]: ${repo}/compare/v${pkg.version}...HEAD`);
   const prev = (log.match(/^## \[(\d+\.\d+\.\d+[^\]]*)\]/m) || [])[1];
   const link = prev ? `${repo}/compare/v${prev}...v${pkg.version}` : `${repo}/releases/tag/v${pkg.version}`;

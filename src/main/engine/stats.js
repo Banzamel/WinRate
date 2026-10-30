@@ -3,6 +3,7 @@
 // difference is larger than chance.
 const { binom, matchProbability } = require('./combinatorics');
 const { METRICS, createMeter } = require('./filters');
+const bias = require('./bias');
 
 // ln Γ(x) (Lanczos).
 function lnGamma(x) {
@@ -152,7 +153,7 @@ function repeatStats(size, pick, draws) {
 }
 
 // Full report for one game: every pool's numbers; patterns, pairs and repeats for the main pool.
-function report(game, draws, expectedDist, { recent = 50 } = {}) {
+function report(game, draws, expectedDist, { recent = 50, halfLife = 0 } = {}) {
   const era = game.eras[game.eras.length - 1];
   const pools = game.pools.map((pool, i) => ({ key: pool.key, size: era.pools[i].size, pick: era.pools[i].pick, ...numberStats(era.pools[i].size, era.pools[i].pick, draws.map((d) => d.pools[i]), { recent }) }));
   const main = draws.map((d) => d.pools[0]);
@@ -166,6 +167,8 @@ function report(game, draws, expectedDist, { recent = 50 } = {}) {
     patterns: expectedDist ? patternStats(game.pools[0], game.slipColumns, main, expectedDist) : null,
     repeats: repeatStats(size, pick, main),
     repeatedDraws: repeatedDraws(main),
+    // Physical bias per pool (machine and balls).
+    bias: game.pools.map((pool, i) => (draws.length > 10 ? bias.analyze(era.pools[i].size, era.pools[i].pick, draws.map((d) => d.pools[i]), { halfLife }) : null)),
     combinations: binom(size, pick),
   };
 }

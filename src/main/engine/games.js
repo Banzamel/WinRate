@@ -22,6 +22,10 @@ const GAMES = {
     ],
     // Coupon layout: numbers fill rows of this many columns (used by the slip-pattern filters).
     slipColumns: 7,
+    // Typical average pool prizes (PLN) for the expected-value calculator; editable in the app.
+    typicalPrizes: { 5: 6000, 4: 200 },
+    typicalJackpot: 15000000,
+    typicalSales: 8000000,
     sources: ['http://www.mbnet.com.pl/dl.txt'],
   },
   eurojackpot: {
@@ -44,6 +48,9 @@ const GAMES = {
       { id: '3+0', hits: [3, 0] }, { id: '1+2', hits: [1, 2] }, { id: '2+1', hits: [2, 1] },
     ],
     slipColumns: 10,
+    typicalPrizes: { '5+1': 2500000, '5+0': 500000, '4+2': 20000, '4+1': 1000, '3+2': 400, '4+0': 400, '2+2': 80, '3+1': 80, '3+0': 70, '1+2': 40, '2+1': 35 },
+    typicalJackpot: 200000000,
+    typicalSales: 60000000,
     sources: ['http://www.mbnet.com.pl/ej.txt'],
   },
 };

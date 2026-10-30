@@ -10,7 +10,7 @@ import { runJob } from './game.js';
 
 export function renderSimulation(body, id) {
   const game = state.games[id];
-  const opts = { strategy: 'filtered', tickets: 10, tests: 200, targets: 3, maxAttempts: id === 'lotto' ? 1e8 : 1e9, recent: 50, ...(gameSettings(id).simulation || {}) };
+  const opts = { strategy: 'filtered', tickets: 10, tests: 200, targets: 3, maxAttempts: id === 'lotto' ? 1e8 : 1e9, recent: 50, halfLife: 0, ...(gameSettings(id).simulation || {}) };
   const set = (patch) => { Object.assign(opts, patch); saveGameSettings(id, { simulation: { ...opts } }); };
   const running = !!state.jobs.sim;
   const progress = el('div', { class: 'sim-progress' }, running ? progressBar(state.jobs.sim.progress || 0) : null);
@@ -25,8 +25,8 @@ export function renderSimulation(body, id) {
     progress.replaceChildren(progressBar(0), el('button', { class: 'btn ghost', onClick: () => window.api.cancel('sim') }, t('common.cancel')));
     const draws = state.history[id].length;
     const job = kind === 'backtest'
-      ? () => window.api.backtest(id, { strategy: opts.strategy, tickets: opts.tickets, tests: Math.min(opts.tests, draws - 1), recent: opts.recent })
-      : () => window.api.untilHit(id, { strategy: opts.strategy, targets: Array.from({ length: Math.min(opts.targets, draws) }, (_, i) => -1 - i), maxAttempts: opts.maxAttempts, recent: opts.recent });
+      ? () => window.api.backtest(id, { strategy: opts.strategy, tickets: opts.tickets, tests: Math.min(opts.tests, draws - 1), recent: opts.recent, halfLife: opts.halfLife })
+      : () => window.api.untilHit(id, { strategy: opts.strategy, targets: Array.from({ length: Math.min(opts.targets, draws) }, (_, i) => -1 - i), maxAttempts: opts.maxAttempts, recent: opts.recent, halfLife: opts.halfLife });
     runJob('sim', body, id, async () => { state[kind][id] = { ...(await job()), opts: { ...opts } }; }, renderSimulation)
       .catch((e) => { if (e.message.includes('cancelled')) toast(t('sim.cancelled')); else toast(e.message, 'bad'); });
   };
@@ -36,7 +36,8 @@ export function renderSimulation(body, id) {
       el('p', {}, t('sim.intro')),
       el('div', { class: 'form-row' },
         el('label', {}, t('generator.strategy'), select(opts.strategy, state.strategies.map((s) => [s, t(`strategy.${s}`)]), (v) => set({ strategy: v }))),
-        el('label', {}, t('sim.recent'), numberInput(opts.recent, { min: 5, max: 1000, onChange: (v) => set({ recent: v || 50 }) }))),
+        el('label', {}, t('sim.recent'), numberInput(opts.recent, { min: 5, max: 1000, onChange: (v) => set({ recent: v || 50 }) })),
+        el('label', {}, t('generator.halfLife'), numberInput(opts.halfLife, { min: 0, max: 10000, onChange: (v) => set({ halfLife: v || 0 }) }))),
       progress),
     el('div', { class: 'sim-cards' },
       card(t('sim.backtest'),
