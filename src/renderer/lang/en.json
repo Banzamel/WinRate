@@ -349,8 +349,6 @@
   "nb.rarely": "Next to each other least often",
   "nb.gaps": "Distance to the next drawn number",
   "nb.hint": "Only pairs expected at least 5 times are ranked. Short distances are naturally the most common — the grey bars show by exactly how much.",
-  "generator.maxCommon": "Max common numbers",
-  "generator.maxCommonHint": "At most this many numbers shared by any two tickets of the coupon, so the tickets cover different numbers.",
   "system.title": "System bet (Lotto)",
   "system.intro": "Mark {min} to {max} numbers on one bet: you play every 6-number combination of them at the normal price per combination.",
   "system.size": "Numbers",

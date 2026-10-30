@@ -349,8 +349,6 @@
   "nb.rarely": "Najrzadziej obok siebie",
   "nb.gaps": "Odległość do następnej wylosowanej liczby",
   "nb.hint": "W rankingu są tylko pary oczekiwane co najmniej 5 razy. Krótkie odległości są naturalnie najczęstsze — szare paski pokazują, o ile dokładnie.",
-  "generator.maxCommon": "Maks. wspólnych liczb",
-  "generator.maxCommonHint": "Najwyżej tyle liczb mogą mieć wspólnych dowolne dwa zakłady kuponu, żeby zakłady obejmowały różne liczby.",
   "system.title": "Zakład systemowy (Lotto)",
   "system.intro": "Zaznacz od {min} do {max} liczb na jednym zakładzie: grasz wszystkie 6-liczbowe kombinacje z nich, każda w normalnej cenie.",
   "system.size": "Liczb",

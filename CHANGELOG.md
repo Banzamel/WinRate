@@ -7,6 +7,11 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- Generator: no "max common numbers" setting — tickets may share any numbers (identical tickets are still
+  skipped). System bets keep all their combinations unique and choose numbers so as many as possible pass
+  the filters.
+
 ## [0.2.3] - 2026-10-30
 
 ### Changed

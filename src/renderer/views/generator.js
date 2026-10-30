@@ -9,9 +9,10 @@ const STRATEGY = 'filtered';
 
 export function renderGenerator(body, id) {
   const game = state.games[id];
-  const { count = 5, maxCommon = game.pools[0].pick - 4 } = gameSettings(id).generator || {};
-  const opts = { count, maxCommon, strategy: STRATEGY };
-  const set = async (patch) => { Object.assign(opts, patch); await saveGameSettings(id, { generator: { count: opts.count, maxCommon: opts.maxCommon } }); };
+  // Tickets may share any numbers (only identical tickets are skipped).
+  const { count = 5 } = gameSettings(id).generator || {};
+  const opts = { count, strategy: STRATEGY };
+  const set = async (patch) => { Object.assign(opts, patch); await saveGameSettings(id, { generator: { count: opts.count } }); };
   const out = state.tickets[id];
   const go = el('button', { class: 'btn primary', onClick: () => {
     go.replaceWith(spinner(t('generator.working')));
@@ -22,7 +23,6 @@ export function renderGenerator(body, id) {
     card(t('generator.title'),
       el('div', { class: 'form-row' },
         el('label', {}, t('generator.count'), numberInput(opts.count, { min: 1, max: 200, onChange: (v) => set({ count: Math.max(1, Math.min(200, v || 1)) }) })),
-        el('label', { title: t('generator.maxCommonHint') }, t('generator.maxCommon'), numberInput(opts.maxCommon, { min: 0, max: game.pools[0].pick - 1, onChange: (v) => set({ maxCommon: v }) })),
         go),
       hint(t('generator.filtersNote'))),
     out ? card(t('generator.tickets', { n: num(out.tickets.length) }),
