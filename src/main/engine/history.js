@@ -57,6 +57,9 @@ function parseText(game, text) {
   return { draws, skipped };
 }
 
+// 2: several draws per date.
+const STORE_FORMAT = 2;
+
 const sortDraws = (draws) => draws.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
 // One JSON file per game. A date can hold several draws (Lotto drew twice a day on many days of
@@ -66,12 +69,21 @@ class HistoryStore {
     this.game = game;
     this.file = path.join(dir, `${game.id}.json`);
     this.draws = [];
-    try { this.draws = sortDraws(JSON.parse(fs.readFileSync(this.file, 'utf8')).draws || []); } catch { /* empty store */ }
+    // Stores written before STORE_FORMAT 2 kept one draw per date: `outdated` asks for a full download.
+    this.format = 0;
+    try {
+      const saved = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+      this.draws = sortDraws(saved.draws || []);
+      this.format = saved.format || 1;
+    } catch { /* empty store */ }
   }
+
+  get outdated() { return this.draws.length > 0 && this.format < STORE_FORMAT; }
 
   save() {
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(this.file, JSON.stringify({ game: this.game.id, updated: new Date().toISOString(), draws: this.draws }));
+    fs.writeFileSync(this.file, JSON.stringify({ game: this.game.id, format: STORE_FORMAT, updated: new Date().toISOString(), draws: this.draws }));
+    this.format = STORE_FORMAT;
   }
 
   // Adds new draws. The n-th draw of a date is matched with the n-th stored draw of that date; a

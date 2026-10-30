@@ -7,6 +7,10 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- The history saved by an older version is downloaded again at the first start, so the missing Lotto draws
+  of 1965–1991 arrive at once instead of after the next draw.
+
 ## [0.2.8] - 2026-10-30
 
 ### Fixed

@@ -89,16 +89,18 @@ const localDate = (game, at) => new Intl.DateTimeFormat('sv-SE', { timeZone: gam
 
 // At start: every game whose newest stored draw is older than its latest draw gets the new results
 // downloaded. Results are published a while after the draw; until then the next start tries again.
+// A store written by an older version (one draw per date) is downloaded again once.
 async function refreshHistories() {
   for (const game of Object.values(GAMES)) {
     const store = stores[game.id];
     const draws = store.list();
     const last = lastDraw(game);
-    if (draws.length && last && draws[draws.length - 1].date >= localDate(game, last)) continue;
+    if (!store.outdated && draws.length && last && draws[draws.length - 1].date >= localDate(game, last)) continue;
     send('history:auto', { game: game.id, state: 'downloading' });
     try {
       const { draws: fresh } = await download(game, (u, o) => net.fetch(u, o));
       const res = store.merge(fresh, { replace: true });
+      if (store.outdated) store.save(); // nothing was missing: still mark the store as up to date
       send('history:auto', { game: game.id, state: 'done', ...res, last: store.list().length ? store.list()[store.list().length - 1].date : null });
     } catch (e) {
       send('history:auto', { game: game.id, state: 'error', error: e.message });

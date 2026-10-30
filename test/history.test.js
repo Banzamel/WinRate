@@ -36,6 +36,12 @@ test('store keeps several draws of one date (Lotto drew twice a day in 1965–19
   assert.deepStrictEqual(new HistoryStore(GAMES.lotto, dir).list(), [a, b]);
   assert.ok(store.remove(b.date, b.pools));
   assert.deepStrictEqual(store.list(), [a]);
+  // A store saved by an older version (no format) asks for one full download.
+  fs.writeFileSync(path.join(dir, 'lotto.json'), JSON.stringify({ game: 'lotto', draws: [a] }));
+  const old = new HistoryStore(GAMES.lotto, dir);
+  assert.ok(old.outdated);
+  old.save();
+  assert.ok(!new HistoryStore(GAMES.lotto, dir).outdated);
 });
 
 test('store merges by date and persists', () => {
