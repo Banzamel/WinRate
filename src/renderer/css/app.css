@@ -91,7 +91,8 @@ ul.plain { margin: 0; padding-left: 18px; }
 .btn.primary:hover { background: #ffd633; }
 .btn.ghost { background: none; }
 .btn:disabled { opacity: .5; cursor: default; }
-.btn.busy { opacity: .6; }
+.btn.busy { opacity: .85; cursor: progress; display: inline-flex; align-items: center; gap: 8px; }
+.btn.busy .spin { width: 14px; height: 14px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
 .icon-btn { border: 0; background: none; color: var(--muted); cursor: pointer; margin-left: auto; }
 .icon-btn:hover { color: var(--red); }

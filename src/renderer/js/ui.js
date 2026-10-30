@@ -77,6 +77,21 @@ export function progressBar(value, label) {
 
 export function spinner(text) { return el('div', { class: 'loading' }, el('span', { class: 'spin' }), text || t('common.working')); }
 
+// Click handler that shows the app is working: the button is disabled and spins until fn finishes.
+export function withBusy(btn, fn) {
+  return async (...args) => {
+    if (btn.classList.contains('busy')) return;
+    const label = [...btn.childNodes];
+    const wasDisabled = btn.disabled;
+    btn.disabled = true; btn.classList.add('busy');
+    btn.replaceChildren(el('span', { class: 'spin' }), ...label);
+    try { return await fn(...args); } finally {
+      btn.disabled = wasDisabled; btn.classList.remove('busy');
+      btn.replaceChildren(...label);
+    }
+  };
+}
+
 let toastTimer = null;
 export function toast(text, tone = '') {
   const node = document.getElementById('toast');

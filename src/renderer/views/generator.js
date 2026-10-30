@@ -1,7 +1,7 @@
 // Generator: tickets for the next draw; every ticket passes all active filters.
 import { t, num, money, pct } from '../js/i18n.js';
 import { state, gameSettings, saveGameSettings, advanced } from '../js/store.js';
-import { el, card, hint, balls, numberInput, select, spinner, toast, table, mount } from '../js/ui.js';
+import { el, card, hint, balls, numberInput, select, spinner, toast, table, mount, withBusy } from '../js/ui.js';
 import { runJob } from './game.js';
 
 // The only generator mode: uniform among the combinations that pass the active filters.
@@ -47,11 +47,11 @@ function wheelCard(id, game) {
       class: `ball pick ${st.numbers.includes(n) ? 'on' : ''}`,
       onClick: () => { st.numbers = st.numbers.includes(n) ? st.numbers.filter((x) => x !== n) : [...st.numbers, n].sort((a, b) => a - b); st.result = null; draw(); },
     }, String(n))));
-    const go = el('button', { class: 'btn primary', disabled: st.numbers.length < pool.pick || null, onClick: async () => {
-      go.disabled = true;
+    const go = el('button', { class: 'btn primary', disabled: st.numbers.length < pool.pick || null }, t('wheel.go'));
+    go.addEventListener('click', withBusy(go, async () => {
       try { st.result = await window.api.wheel(id, { numbers: st.numbers, guarantee: st.guarantee }); } catch (e) { toast(e.message.replace(/^.*Error: /, ''), 'bad'); }
       draw();
-    } }, t('wheel.go'));
+    }));
     const r = st.result;
     body.replaceChildren(
       hint(t('wheel.intro', { k: pool.pick })),
@@ -93,14 +93,18 @@ function systemCard(id, game) {
       } catch (e) { toast(e.message.replace(/^.*Error: /, ''), 'bad'); }
       draw();
     };
+    const autoBtn = el('button', { class: 'btn primary' }, t('system.auto'));
+    autoBtn.addEventListener('click', withBusy(autoBtn, run(true)));
+    const mineBtn = el('button', { class: 'btn', disabled: st.numbers.length !== st.m || null }, t('system.mine', { n: st.numbers.length, m: st.m }));
+    mineBtn.addEventListener('click', withBusy(mineBtn, run(false)));
     const r = st.result;
     const cost = r ? r.table.bets * game.price.amount : 0;
     body.replaceChildren(
       hint(t('system.intro', { min: game.system.min, max: game.system.max })),
       el('div', { class: 'form-row' },
         el('label', {}, t('system.size'), select(st.m, Array.from({ length: game.system.max - game.system.min + 1 }, (_, i) => game.system.min + i).map((m) => [m, t('system.sizeN', { m, bets: comb(m, pool.pick), cost: money(comb(m, pool.pick) * game.price.amount, game.price.currency) })]), (v) => { st.m = Number(v); st.numbers = st.numbers.slice(0, st.m); st.result = null; draw(); })),
-        el('button', { class: 'btn primary', onClick: run(true) }, t('system.auto')),
-        el('button', { class: 'btn', disabled: st.numbers.length !== st.m || null, onClick: run(false) }, t('system.mine', { n: st.numbers.length, m: st.m })),
+        autoBtn,
+        mineBtn,
         el('button', { class: 'btn ghost', onClick: () => { st.numbers = []; st.result = null; draw(); } }, t('wheel.clear'))),
       picker,
       r ? el('div', { class: 'result' },

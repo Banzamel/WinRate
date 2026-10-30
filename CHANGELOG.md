@@ -7,6 +7,10 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- Buttons that start longer work ("Choose numbers for me", "Use my numbers", wheels, history download,
+  import, export and adding a draw) show a spinner and stay disabled until the app has finished.
+
 ## [0.2.5] - 2026-10-30
 
 ### Changed
