@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-10-30
+
 ### Fixed
 - Lotto history keeps both draws of a day: in 1965–1991 Lotto often drew twice on one date, and only the
   first draw was kept (6 468 instead of 7 424 draws). The missing 956 draws are added at the next download.
@@ -130,7 +132,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.8...HEAD
+[0.2.8]: https://github.com/Banzamel/WinRate/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/Banzamel/WinRate/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/Banzamel/WinRate/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/Banzamel/WinRate/compare/v0.2.4...v0.2.5
