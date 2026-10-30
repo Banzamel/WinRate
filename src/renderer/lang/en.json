@@ -150,7 +150,7 @@
   "filter.low": "Low numbers",
   "filter.low.hint": "allowed number from the lower half of the pool",
   "filter.sum": "Sum",
-  "filter.sum.hint": "allowed sum of the numbers (default: mean ± 1.5 SD)",
+  "filter.sum.hint": "allowed sum of the numbers (mean ± 2 SD: only the extreme sums are out)",
   "filter.maxRun": "Consecutive numbers",
   "filter.maxRun.hint": "longest allowed run like 12-13-14",
   "filter.maxAP": "Arithmetic progression",

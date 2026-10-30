@@ -150,7 +150,7 @@
   "filter.low": "Niskie",
   "filter.low.hint": "dozwolona liczba z dolnej połowy puli",
   "filter.sum": "Suma",
-  "filter.sum.hint": "dozwolona suma liczb (domyślnie: średnia ± 1,5 odchylenia)",
+  "filter.sum.hint": "dozwolona suma liczb (średnia ± 2 odchylenia: odpadają tylko skrajne sumy)",
   "filter.maxRun": "Kolejne liczby",
   "filter.maxRun.hint": "najdłuższy dozwolony ciąg typu 12-13-14",
   "filter.maxAP": "Ciąg arytmetyczny",

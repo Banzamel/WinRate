@@ -7,6 +7,9 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- The hint of the sum filter shows its real range (mean ± 2 standard deviations).
+
 ## [0.2.6] - 2026-10-30
 
 ### Changed
