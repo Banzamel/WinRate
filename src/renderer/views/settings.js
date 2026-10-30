@@ -14,6 +14,8 @@ export function renderSettings(root) {
       select(state.settings.language || 'pl', LANGUAGES.map((l) => [l, t(`language.${l}`)]), (v) => setLanguage(v)),
       hint(t('settings.languageHint'))),
     card(t('settings.appUpdate'), update.node, hint(t('settings.appUpdateHint'))),
-    card(t('settings.data'), hint(t('settings.dataHint'))),
+    card(t('settings.data'),
+      el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: state.settings.autoHistory !== false || null, onChange: async (e) => { state.settings = await window.api.setSettings({ autoHistory: e.target.checked }); } }), t('settings.autoHistory')),
+      hint(t('settings.dataHint'))),
   );
 }

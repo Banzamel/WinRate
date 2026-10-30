@@ -17,6 +17,8 @@ moves them into a numbered section automatically (see README → Releasing).
 - **Abbreviated wheels** (systems): fewest tickets that guarantee a win of the chosen size.
 - **Automatic updates** from GitHub Releases.
 - One-click release: Actions → *Publish new version* raises the version, tags it and builds the installer.
+- New draw results are downloaded automatically at start (switch in Settings).
+- The exclusion map of the filters (one bit per combination, 1.7 MB for Lotto) is saved in `data/combinations` and reused after a restart.
 
 ### Changed
 - All data (history, settings, caches) is kept in the `data` folder inside the install folder; uninstalling

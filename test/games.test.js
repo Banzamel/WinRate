@@ -32,3 +32,9 @@ test('tier lookup', () => {
   assert.strictEqual(tierFor(GAMES.eurojackpot, [1, 1]), null);
   assert.strictEqual(tierFor(GAMES.lotto, [3]).fixed, 24);
 });
+
+test('latest past draw', () => {
+  const { lastDraw } = require('../src/main/engine/games');
+  // Friday noon: the latest Lotto draw was Thursday 22:00 Warsaw time
+  assert.strictEqual(lastDraw(GAMES.lotto, new Date('2026-10-30T12:00:00Z')).toISOString(), '2026-10-29T21:00:00.000Z');
+});

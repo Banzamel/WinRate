@@ -346,5 +346,8 @@
   "appUpdate.error": "Could not check for updates: {error}",
   "appUpdate.download": "Download",
   "appUpdate.install": "Restart and install",
-  "appUpdate.check": "Check for updates"
+  "appUpdate.check": "Check for updates",
+  "history.autoDone": "{game}: {added} new draws downloaded ({total} in total).",
+  "history.autoError": "{game}: could not download new results ({error}). The app tries again at the next start.",
+  "settings.autoHistory": "Download new draw results automatically at start"
 }

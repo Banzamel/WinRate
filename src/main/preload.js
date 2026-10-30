@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('api', {
   wheel: invoke('engine:wheel'),
   cancel: invoke('job:cancel'),
   onProgress: on('job:progress'),
+  onHistoryAuto: on('history:auto'),
   checkAppUpdate: invoke('update:check'),
   downloadAppUpdate: invoke('update:download'),
   installAppUpdate: invoke('update:install'),

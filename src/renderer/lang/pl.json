@@ -346,5 +346,8 @@
   "appUpdate.error": "Nie udało się sprawdzić aktualizacji: {error}",
   "appUpdate.download": "Pobierz",
   "appUpdate.install": "Uruchom ponownie i zainstaluj",
-  "appUpdate.check": "Sprawdź aktualizacje"
+  "appUpdate.check": "Sprawdź aktualizacje",
+  "history.autoDone": "{game}: pobrano nowe losowania: {added} (razem {total}).",
+  "history.autoError": "{game}: nie udało się pobrać nowych wyników ({error}). Aplikacja spróbuje przy następnym uruchomieniu.",
+  "settings.autoHistory": "Pobieraj nowe wyniki losowań automatycznie przy starcie"
 }

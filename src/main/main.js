@@ -5,7 +5,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { Settings } = require('./settings');
 const { Jobs } = require('./jobs');
-const { GAMES, getGame, currentEra, tierOdds, combinationCount, anyPrizeProbability, nextDraws, drawsPerYear } = require('./engine/games');
+const { GAMES, getGame, currentEra, tierOdds, combinationCount, anyPrizeProbability, nextDraws, lastDraw, drawsPerYear } = require('./engine/games');
 const { HistoryStore, parseText, download, validateDraw } = require('./engine/history');
 const { defaultFilters, FILTERS } = require('./engine/filters');
 const { STRATEGIES } = require('./engine/simulate');
@@ -42,6 +42,8 @@ let updater = null;
 const stores = {};
 const send = (channel, payload) => { if (win && !win.isDestroyed()) win.webContents.send(channel, payload); };
 const jobs = new Jobs((p) => send('job:progress', p));
+// Exclusion maps of the filters are kept on disk (data/combinations) and reused across starts.
+const combosDir = () => path.join(app.getPath('userData'), 'combinations');
 
 // History shipped with the installer (fetched at build time) seeds an empty store.
 function openStores() {
@@ -81,6 +83,28 @@ async function distributionsFor(id) {
   return distCache[id];
 }
 
+// Local date (YYYY-MM-DD) of an instant in the game's time zone.
+const localDate = (game, at) => new Intl.DateTimeFormat('sv-SE', { timeZone: game.schedule.timeZone }).format(at);
+
+// At start: every game whose newest stored draw is older than its latest draw gets the new results
+// downloaded. Results are published a while after the draw; until then the next start tries again.
+async function refreshHistories() {
+  for (const game of Object.values(GAMES)) {
+    const store = stores[game.id];
+    const draws = store.list();
+    const last = lastDraw(game);
+    if (draws.length && last && draws[draws.length - 1].date >= localDate(game, last)) continue;
+    send('history:auto', { game: game.id, state: 'downloading' });
+    try {
+      const { draws: fresh } = await download(game, (u, o) => net.fetch(u, o));
+      const res = store.merge(fresh, { replace: true });
+      send('history:auto', { game: game.id, state: 'done', ...res, last: store.list().length ? store.list()[store.list().length - 1].date : null });
+    } catch (e) {
+      send('history:auto', { game: game.id, state: 'error', error: e.message });
+    }
+  }
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1360, height: 880, minWidth: 1100, minHeight: 700,
@@ -89,6 +113,7 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.once('ready-to-show', () => win.show());
+  win.webContents.once('did-finish-load', () => { if (settings.get().autoHistory !== false) refreshHistories(); });
   win.on('closed', () => { jobs.stopAll(); app.quit(); });
   win.webContents.on('console-message', (_e, level, message, line, source) => {
     if (level >= 2) console.error(`[renderer] ${message} (${source}:${line})`);
@@ -148,10 +173,10 @@ function registerIpc() {
     const dist = await distributionsFor(id);
     return jobs.run('stats', 'report', { game: id, draws: draws(id), dist, recent: opts.recent || 50, halfLife: opts.halfLife || 0 });
   });
-  ipcMain.handle('engine:filters', (_e, id, config) => jobs.run('filters', 'filters', { game: id, draws: draws(id), config: config || configFor(id) }));
-  ipcMain.handle('engine:generate', (_e, id, opts) => jobs.run('generate', 'generate', { game: id, draws: draws(id), config: configFor(id), ...opts }));
-  ipcMain.handle('engine:backtest', (_e, id, opts) => jobs.run('sim', 'backtest', { game: id, draws: draws(id), config: configFor(id), ...opts }));
-  ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts }));
+  ipcMain.handle('engine:filters', (_e, id, config) => jobs.run('filters', 'filters', { game: id, draws: draws(id), config: config || configFor(id) , cacheDir: combosDir() }));
+  ipcMain.handle('engine:generate', (_e, id, opts) => jobs.run('generate', 'generate', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
+  ipcMain.handle('engine:backtest', (_e, id, opts) => jobs.run('sim', 'backtest', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
+  ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:ev', (_e, id, opts) => jobs.run('ev', 'ev', { game: id, draws: draws(id), ...opts }));
   ipcMain.handle('engine:wheel', (_e, id, opts) => jobs.run('generate', 'wheel', { game: id, ...opts }));
   ipcMain.handle('job:cancel', (_e, lane) => jobs.cancel(lane));

@@ -1,7 +1,7 @@
 // Renderer entry: boot, navigation, title bar and background job progress.
 import { loadLanguage, t, translateDom } from './i18n.js';
-import { state, subscribe, emit } from './store.js';
-import { el } from './ui.js';
+import { state, subscribe, emit, loadHistory, historyChanged } from './store.js';
+import { el, toast } from './ui.js';
 import { renderGame } from '../views/game.js';
 import { renderSettings } from '../views/settings.js';
 import { renderAbout } from '../views/about.js';
@@ -67,6 +67,19 @@ async function boot() {
   subscribe((e) => { if (e.type === 'done') { delete state.jobs[e.lane]; renderJobs(); } });
   window.api.onAppUpdate((u) => { state.appUpdate = u; renderUpdateBanner(); emit({ type: 'appUpdate' }); });
   renderUpdateBanner();
+  // Results downloaded automatically at start.
+  window.api.onHistoryAuto(async (e) => {
+    const name = state.games[e.game].name;
+    state.historyAuto = { ...(state.historyAuto || {}), [e.game]: e };
+    if (e.state === 'error') { toast(t('history.autoError', { game: name, error: e.error }), 'bad'); return; }
+    if (e.state !== 'done') return;
+    if (e.added || e.changed) {
+      toast(t('history.autoDone', { game: name, added: e.added, total: e.total }), 'good');
+      await loadHistory(e.game, { force: true });
+      historyChanged(e.game);
+      if (state.view === e.game) render();
+    }
+  });
   renderNav();
   render();
 }

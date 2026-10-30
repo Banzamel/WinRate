@@ -1,6 +1,9 @@
 // Background worker: everything that walks millions of combinations runs here, so the window
 // never freezes. Messages: { id, task, params } in; { id, progress } and { id, result | error } out.
 const { parentPort } = require('worker_threads');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const { getGame, currentEra } = require('./engine/games');
 const filters = require('./engine/filters');
 const stats = require('./engine/stats');
@@ -10,15 +13,36 @@ const { wheel } = require('./engine/wheel');
 const { tierOdds, combinationCount } = require('./engine/games');
 
 // The census of the history-independent filters is reused while the settings stay the same.
+// It is also saved as a file per filter set: one bit per combination (Lotto: 13 983 816 bits =
+// 1.7 MB), so after a restart the exclusions are read instead of recomputed.
 const cache = new Map();
-function fixedFor(game, config, progress) {
+function fixedFor(game, config, progress, cacheDir) {
   if (!config) return null;
-  const key = `${game.id}:${JSON.stringify(filters.splitConfig(config).fixed)}`;
-  if (!cache.has(key)) {
-    if (cache.size > 4) cache.delete(cache.keys().next().value);
-    cache.set(key, sim.fixedCensus(game, config, progress));
+  const fixedConfig = filters.splitConfig(config).fixed;
+  const key = `${game.id}:${JSON.stringify(fixedConfig)}`;
+  if (cache.has(key)) return cache.get(key);
+  const hash = crypto.createHash('sha1').update(key).digest('hex').slice(0, 16);
+  const file = cacheDir && path.join(cacheDir, `${game.id}-${hash}.bin`);
+  let result = null;
+  if (file) {
+    try {
+      const meta = JSON.parse(fs.readFileSync(`${file}.json`, 'utf8'));
+      const allowed = new Uint8Array(fs.readFileSync(file));
+      if (meta.key === key) result = { ...meta, allowed };
+    } catch { /* not saved yet */ }
   }
-  return cache.get(key);
+  if (!result) {
+    result = sim.fixedCensus(game, config, progress);
+    if (file) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+      fs.writeFileSync(file, result.allowed);
+      const { allowed, ...meta } = result;
+      fs.writeFileSync(`${file}.json`, JSON.stringify({ ...meta, key, config: fixedConfig }));
+    }
+  }
+  if (cache.size > 4) cache.delete(cache.keys().next().value);
+  cache.set(key, result);
+  return result;
 }
 
 const TASKS = {
@@ -63,21 +87,21 @@ const TASKS = {
     return { total: all.total, allowedCount: all.allowedCount, filters: all.filters, survival };
   },
 
-  generate({ game, draws, strategy, config, count, recent, halfLife }, progress) {
+  generate({ game, draws, strategy, config, count, recent, halfLife, cacheDir }, progress) {
     const g = getGame(game);
-    return sim.generate(g, draws, { strategy, config, count, recent, halfLife, fixed: strategy === 'random' ? null : fixedFor(g, config, progress) });
+    return sim.generate(g, draws, { strategy, config, count, recent, halfLife, fixed: strategy === 'random' ? null : fixedFor(g, config, progress, cacheDir) });
   },
 
-  backtest({ game, draws, strategy, config, tickets, tests, recent, halfLife }, progress) {
+  backtest({ game, draws, strategy, config, tickets, tests, recent, halfLife, cacheDir }, progress) {
     const g = getGame(game);
-    const fixed = strategy === 'random' ? null : fixedFor(g, config);
+    const fixed = strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
     return sim.backtest(g, draws, { strategy, config, tickets, tests, recent, halfLife, fixed, onProgress: progress });
   },
 
   // One or more past draws, each played "until it hits".
-  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife }, progress) {
+  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife, cacheDir }, progress) {
     const g = getGame(game);
-    const fixed = strategy === 'random' ? null : fixedFor(g, config);
+    const fixed = strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
     const results = [];
     targets.forEach((index, i) => {
       results.push(sim.untilHit(g, draws, {

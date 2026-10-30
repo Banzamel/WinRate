@@ -114,4 +114,10 @@ function nextDraws(game, from = new Date(), count = 3) {
 
 const drawsPerYear = (game) => game.schedule.weekdays.length * 52;
 
-module.exports = { GAMES, getGame, eraOf, currentEra, combinationCount, tierOdds, anyPrizeProbability, tierFor, nextDraws, drawsPerYear };
+// The most recent draw time before `now` (Date).
+function lastDraw(game, now = new Date()) {
+  const draws = nextDraws(game, new Date(now.getTime() - 8 * 86400000), 6).filter((d) => d < now);
+  return draws[draws.length - 1] || null;
+}
+
+module.exports = { GAMES, getGame, eraOf, currentEra, combinationCount, tierOdds, anyPrizeProbability, tierFor, nextDraws, lastDraw, drawsPerYear };
