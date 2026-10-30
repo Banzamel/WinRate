@@ -182,6 +182,7 @@ function registerIpc() {
   ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:ev', (_e, id, opts) => jobs.run('ev', 'ev', { game: id, draws: draws(id), ...opts }));
   ipcMain.handle('engine:system', (_e, id, opts) => jobs.run('generate', 'system', { game: id, draws: draws(id), config: configFor(id), ...opts }));
+  ipcMain.handle('engine:checkTicket', (_e, id, pools) => jobs.run('ev', 'checkTicket', { game: id, draws: draws(id), config: configFor(id), pools }));
   ipcMain.handle('engine:wheel', (_e, id, opts) => jobs.run('generate', 'wheel', { game: id, ...opts }));
   ipcMain.handle('job:cancel', (_e, lane) => jobs.cancel(lane));
 

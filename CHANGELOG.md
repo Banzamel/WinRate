@@ -7,6 +7,11 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Added
+- **Your numbers** (Generator): pick the numbers by clicking or type them; the app shows which active filters
+  the ticket breaks, how popular it is, its closest past results and a rating — the chance stays the same for
+  every ticket — and the ticket can be saved as a coupon.
+
 ## [0.4.0] - 2026-10-30
 
 ### Added

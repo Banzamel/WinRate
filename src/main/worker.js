@@ -83,6 +83,28 @@ const TASKS = {
     return { numbers: chosen.numbers, table: systemTable(pool.size, pool.pick, m, tierOdds(g)), bets, price: g.price };
   },
 
+  // A ticket of the player's own: the filters it breaks, how popular it is, the closest past results.
+  checkTicket({ game, draws, config, pools }) {
+    const g = getGame(game);
+    const today = new Date().toISOString().slice(0, 10);
+    const error = require('./engine/history').validateDraw(g, { date: today, pools });
+    if (error) return { error };
+    const pool = currentEra(g).pools[0];
+    const era = sim.eraDraws(g, draws);
+    const ctx = new filters.HistoryContext(pool, era.map((d) => d.pools[0]));
+    const mask = config ? filters.createChecker(pool, g.slipColumns, config, ctx)(pools[0]) : 0;
+    const failed = filters.FILTERS.filter((f, i) => mask & (1 << i)).map((f) => f.id);
+    const score = popularity.createScorer(pool, g.slipColumns, era.length ? era[era.length - 1].pools[0] : [])(pools[0]);
+    // Most main numbers in common with any past draw (whole history), newest such draws first.
+    let best = 0; let closest = [];
+    for (let i = draws.length - 1; i >= 0; i--) {
+      const d = draws[i];
+      const n = d.pools[0].filter((x) => pools[0].includes(x)).length;
+      if (n > best) { best = n; closest = [d]; } else if (n === best && closest.length < 3) closest.push(d);
+    }
+    return { failed, popularity: score, best, closest };
+  },
+
   wheel({ game, numbers, guarantee }) {
     const g = getGame(game);
     const k = currentEra(g).pools[0].pick;

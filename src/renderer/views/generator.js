@@ -36,6 +36,7 @@ export function renderGenerator(body, id) {
         saveButton(body, id, game, () => ({ tickets: out.tickets })),
         el('span', { class: 'muted' }, t('generator.cost', { cost: money(out.tickets.length * game.price.amount, game.price.currency) }))),
       hint(t('generator.honest', { odds: num(game.combinations / out.tickets.length) }))) : null,
+    mineCard(body, id, game),
     game.system ? systemCard(id, game, body) : null,
     couponsCard(body, id, game),
     advanced() ? wheelCard(id, game) : null,
@@ -206,4 +207,72 @@ function couponsCard(view, id, game) {
     spent ? el('p', {}, t('coupons.balance', { spent: money(spent, cur), won: money(won, cur) })) : null,
     ...items,
     hint(t('coupons.hint')));
+}
+
+// "Your numbers": a ticket picked or typed by the player, checked against the active filters and
+// rated by how often a win would be shared. Every ticket keeps the same chance to win.
+const mine = {};
+
+function verdict(r) {
+  if (r.failed.length) return ['bad', 'mine.verdict.filters'];
+  if (r.popularity > 2) return ['warn', 'mine.verdict.popular'];
+  if (r.popularity < 0.7) return ['good', 'mine.verdict.good'];
+  return ['', 'mine.verdict.ok'];
+}
+
+function mineCard(view, id, game) {
+  const st = mine[id] || (mine[id] = { pools: game.pools.map(() => []), result: null });
+  const body = el('div');
+  const full = () => st.pools.every((nums, i) => nums.length === game.pools[i].pick);
+  const draw = () => {
+    const pickers = game.pools.map((p, i) => el('div', { class: 'picker' }, Array.from({ length: p.size }, (_, j) => j + 1).map((n) => el('button', {
+      class: `ball pick ${i ? 'extra-pick' : ''} ${st.pools[i].includes(n) ? 'on' : ''}`,
+      onClick: () => {
+        const nums = st.pools[i];
+        if (nums.includes(n)) st.pools[i] = nums.filter((x) => x !== n);
+        else if (nums.length < p.pick) st.pools[i] = [...nums, n].sort((a, b) => a - b);
+        st.result = null; draw();
+      },
+    }, String(n)))));
+    const typed = el('input', { type: 'text', style: { width: '240px' }, placeholder: t(game.pools.length > 1 ? 'mine.typeEuro' : 'mine.type') });
+    const useTyped = () => {
+      const nums = (typed.value.match(/\d+/g) || []).map(Number);
+      let at = 0;
+      st.pools = game.pools.map((p) => { const part = [...new Set(nums.slice(at, at + p.pick))].sort((a, b) => a - b); at += p.pick; return part; });
+      st.result = null; draw();
+    };
+    typed.addEventListener('keydown', (e) => { if (e.key === 'Enter') useTyped(); });
+    const check = el('button', { class: 'btn primary', disabled: !full() || null }, t('mine.check'));
+    check.addEventListener('click', withBusy(check, async () => {
+      try { st.result = await window.api.checkTicket(id, st.pools); } catch (e) { toast(e.message.replace(/^.*Error: /, ''), 'bad'); }
+      draw();
+    }));
+    const r = st.result;
+    let result = null;
+    if (r && r.error) result = el('p', { class: 'bad' }, t(`history.invalid.${r.error}`));
+    else if (r) {
+      const [tone, key] = verdict(r);
+      const pick = game.pools[0].pick;
+      result = el('div', { class: 'result' },
+        el('div', { class: 'ticket' }, balls(st.pools), saveButton(view, id, game, () => ({ tickets: [st.pools.map((nums) => nums.slice())] }))),
+        el('p', { class: tone }, el('strong', {}, t(key))),
+        r.failed.length
+          ? el('div', {}, el('p', {}, t('mine.failed')), el('ul', {}, r.failed.map((fid) => el('li', {}, el('strong', {}, t(`filter.${fid}`)), ' — ', t(`filter.${fid}.hint`)))))
+          : el('p', { class: 'good' }, t('mine.passes')),
+        el('p', {}, el('span', { class: `pop ${r.popularity > 3 ? 'bad' : r.popularity < 0.7 ? 'good' : ''}` }, t('generator.popularity', { x: num(r.popularity, r.popularity < 10 ? 2 : 0) })), ' ', t('mine.popularity')),
+        el('p', {}, r.best === pick ? t('mine.alreadyDrawn') : t('mine.closest', { n: r.best })),
+        el('div', { class: 'tickets' }, r.closest.map((d) => el('div', { class: 'ticket' }, el('span', { class: 'muted' }, date(d.date)), balls(d.pools, { hits: st.pools })))));
+    }
+    body.replaceChildren(
+      el('div', { class: 'form-row' },
+        el('label', {}, t('mine.typeLabel'), typed),
+        el('button', { class: 'btn', onClick: useTyped }, t('mine.use')),
+        check,
+        el('button', { class: 'btn ghost', onClick: () => { st.pools = game.pools.map(() => []); st.result = null; draw(); } }, t('wheel.clear'))),
+      ...pickers,
+      result,
+      hint(t('mine.hint')));
+  };
+  draw();
+  return card(t('mine.title'), body);
 }

@@ -207,3 +207,4 @@ details.info[open] > summary { margin-bottom: 4px; }
 /* Saved coupons */
 .coupon { border-top: 1px solid var(--line); padding: 10px 0; display: grid; gap: 8px; }
 .coupon-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ball.pick.extra-pick.on { color: #fff; background: radial-gradient(circle at 35% 30%, #9cc8ff, var(--blue) 55%, #1d5fb8); }

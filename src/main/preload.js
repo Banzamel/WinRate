@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('api', {
   untilHit: invoke('engine:untilHit'),
   expectedValue: invoke('engine:ev'),
   wheel: invoke('engine:wheel'),
+  checkTicket: invoke('engine:checkTicket'),
   system: invoke('engine:system'),
   cancel: invoke('job:cancel'),
   onProgress: on('job:progress'),
