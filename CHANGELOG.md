@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-30
+
 ### Changed
 - Simpler Simulation: no strategy, window or memory to choose — the backtest and "until it hits" play the
   Generator's tickets (all active filters) next to a plain random player.
@@ -91,7 +93,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/Banzamel/WinRate/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/Banzamel/WinRate/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Banzamel/WinRate/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Banzamel/WinRate/compare/v0.1.0...v0.2.0
