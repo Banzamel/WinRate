@@ -7,6 +7,15 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Added
+- **Saved coupons**: "Save coupon" next to the generated tickets and the system bet keeps them for the next
+  draw; once its result is downloaded (automatically at start) every ticket shows its hits and prize, with the
+  balance of all checked coupons.
+
+### Changed
+- Generator: of every 12 tickets that pass the filters the least popular one is played — the same chance to
+  win, but a win is shared with fewer players (average popularity about 0.45 instead of 0.7).
+
 ## [0.3.0] - 2026-10-30
 
 ### Changed

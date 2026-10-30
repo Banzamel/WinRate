@@ -31,7 +31,7 @@ More detail: `.claude/docs/architecture.md`, `.claude/docs/release.md`. Release 
   Keep the responsible-gambling note.
 - **Keep the UI simple** (owner's decision): filters are only switched on/off with fixed values
   (`filterValues`/`defaultFilters` in `engine/filters.js`); the Generator and Simulation have no strategy choice — every
-  ticket passes all active filters. Don't add knobs/options without being asked.
+  ticket passes all active filters (Generator: the least popular of 12 such tickets). Don't add knobs/options without being asked.
 - **Translations**: every user-visible string goes into both `lang/pl.json` and `lang/en.json` (same keys).
 - **Engine stays pure**: no Electron imports in `src/main/engine/`; add/extend tests in `test/` for engine changes.
 - **Heavy work** goes to `worker.js` with progress reporting and cancel support (see `jobs.js`).

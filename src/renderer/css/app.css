@@ -203,3 +203,7 @@ details.info > summary::before { content: "i"; width: 18px; height: 18px; border
 details.info[open] > summary { margin-bottom: 4px; }
 .big-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .btn.large { padding: 12px 22px; font-size: 16px; }
+
+/* Saved coupons */
+.coupon { border-top: 1px solid var(--line); padding: 10px 0; display: grid; gap: 8px; }
+.coupon-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }

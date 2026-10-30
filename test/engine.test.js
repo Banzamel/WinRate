@@ -114,6 +114,18 @@ test('backtest and until-hit', { timeout: 120000 }, () => {
   assert.deepStrictEqual(excluded.failed, ['odd']);
 });
 
+test('generator tickets: within the filters and less popular than plain filtered ones', { timeout: 60000 }, () => {
+  const game = GAMES.lotto;
+  const config = defaultFilters(game.pools[0]);
+  const draws = [{ date: '2026-10-29', pools: [[1, 10, 15, 16, 23, 24]] }];
+  const check = createChecker(game.pools[0], game.slipColumns, config, new HistoryContext(game.pools[0], draws.map((d) => d.pools[0])));
+  const unpopular = generate(game, draws, { strategy: 'unpopular', config, count: 40, seed: 1 });
+  const filtered = generate(game, draws, { strategy: 'filtered', config, count: 40, seed: 1 });
+  assert.ok(unpopular.tickets.every((tk) => !check(tk[0])));
+  const avg = (x) => x.reduce((s, v) => s + v, 0) / x.length;
+  assert.ok(avg(unpopular.popularity) < avg(filtered.popularity));
+});
+
 test('until it hits never plays a ticket twice', () => {
   const pool = { size: 10, pick: 3 }; // 120 tickets
   const game = { ...GAMES.lotto, pools: [pool], eras: [{ from: '2000-01-01', pools: [pool] }], slipColumns: 5 };

@@ -1,11 +1,14 @@
-// Generator: tickets for the next draw; every ticket passes all active filters.
-import { t, num, money, pct } from '../js/i18n.js';
+// Generator: tickets for the next draw; every ticket passes all active filters and is the least
+// popular of several such tickets. Saved coupons are checked against the results automatically.
+import { t, num, money, pct, date } from '../js/i18n.js';
 import { state, gameSettings, saveGameSettings, advanced } from '../js/store.js';
 import { el, card, hint, balls, numberInput, select, spinner, toast, table, mount, withBusy } from '../js/ui.js';
 import { runJob } from './game.js';
 
-// The only generator mode: uniform among the combinations that pass the active filters.
-const STRATEGY = 'filtered';
+// Tickets: of 12 random tickets that pass the active filters the least popular one is kept — the
+// same chance to win, but a win is shared with fewer players. System numbers: within the filters.
+const STRATEGY = 'unpopular';
+const SYSTEM_STRATEGY = 'filtered';
 
 export function renderGenerator(body, id) {
   const game = state.games[id];
@@ -30,9 +33,11 @@ export function renderGenerator(body, id) {
         out.popularity ? el('span', { class: `pop ${out.popularity[i] > 3 ? 'bad' : out.popularity[i] < 0.7 ? 'good' : ''}`, title: t('generator.popularityTitle') }, t('generator.popularity', { x: num(out.popularity[i], out.popularity[i] < 10 ? 2 : 0) })) : null))),
       el('div', { class: 'btn-row' },
         el('button', { class: 'btn', onClick: () => { navigator.clipboard.writeText(out.tickets.map((tk) => tk.map((p) => p.join(' ')).join(' | ')).join('\n')); toast(t('generator.copied'), 'good'); } }, t('generator.copy')),
+        saveButton(body, id, game, () => ({ tickets: out.tickets })),
         el('span', { class: 'muted' }, t('generator.cost', { cost: money(out.tickets.length * game.price.amount, game.price.currency) }))),
       hint(t('generator.honest', { odds: num(game.combinations / out.tickets.length) }))) : null,
-    game.system ? systemCard(id, game) : null,
+    game.system ? systemCard(id, game, body) : null,
+    couponsCard(body, id, game),
     advanced() ? wheelCard(id, game) : null,
   );
 }
@@ -72,7 +77,7 @@ function wheelCard(id, game) {
 }
 
 // Lotto system bet: m numbers = every 6-number combination of them, with the prizes it guarantees.
-function systemCard(id, game) {
+function systemCard(id, game, view) {
   const pool = game.pools[0];
   const st = (state.system = state.system || {})[id] || (state.system[id] = { m: game.system.min, numbers: [], result: null });
   const body = el('div');
@@ -88,7 +93,7 @@ function systemCard(id, game) {
     }, String(n))));
     const run = (auto) => async () => {
       try {
-        st.result = await window.api.system(id, { m: st.m, numbers: auto ? null : st.numbers, strategy: STRATEGY });
+        st.result = await window.api.system(id, { m: st.m, numbers: auto ? null : st.numbers, strategy: SYSTEM_STRATEGY });
         st.numbers = st.result.numbers;
       } catch (e) { toast(e.message.replace(/^.*Error: /, ''), 'bad'); }
       draw();
@@ -108,7 +113,7 @@ function systemCard(id, game) {
         el('button', { class: 'btn ghost', onClick: () => { st.numbers = []; st.result = null; draw(); } }, t('wheel.clear'))),
       picker,
       r ? el('div', { class: 'result' },
-        el('div', { class: 'ticket' }, balls([r.numbers])),
+        el('div', { class: 'ticket' }, balls([r.numbers]), saveButton(view, id, game, () => ({ tickets: r.bets.map((b) => [b.numbers]), system: r.numbers }))),
         el('p', {}, t('system.summary', { bets: num(r.table.bets), cost: money(cost, game.price.currency), pass: num(r.bets.filter((b) => b.passes).length), odds: num(1 / r.table.jackpot), any: pct(r.table.any, 2) })),
         table([t('system.drawn'), t('system.chance'), ...tiers.map((tier) => t('system.tier', { tier: tier.id })), t('system.payout')],
           r.table.rows.slice().reverse().filter((row) => Object.keys(row.wins).length).map((row) => [
@@ -130,4 +135,75 @@ function fixedPayout(row, tiers, game) {
   const fixed = tiers.reduce((s, tier) => s + (tier.fixed && row.wins[tier.id] ? tier.fixed * row.wins[tier.id] : 0), 0);
   const pools = tiers.filter((tier) => !tier.fixed && row.wins[tier.id]).length;
   return fixed ? `${money(fixed, game.price.currency)}${pools ? ' + …' : ''}` : (pools ? '…' : '–');
+}
+
+// Saved coupons: the tickets of one draw (the next one when saved), kept in the game settings.
+const couponsOf = (id) => gameSettings(id).coupons || [];
+
+// Local date (YYYY-MM-DD) of the next draw of a game.
+function nextDrawDate(game) {
+  const next = game.nextDraws.find((d) => new Date(d) > Date.now()) || game.nextDraws[0];
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: game.schedule.timeZone }).format(new Date(next));
+}
+
+function saveButton(view, id, game, coupon) {
+  return el('button', { class: 'btn', onClick: async () => {
+    const drawDate = nextDrawDate(game);
+    await saveGameSettings(id, { coupons: [...couponsOf(id), { id: Date.now(), drawDate, price: game.price.amount, ...coupon() }] });
+    toast(t('coupons.saved', { date: date(drawDate) }), 'good');
+    view.replaceChildren(); renderGenerator(view, id);
+  } }, t('coupons.save'));
+}
+
+// Hits of every ticket against the draw of the coupon's date and its prize tier.
+function checkCoupon(coupon, draws, game) {
+  const draw = draws.find((d) => d.date === coupon.drawDate);
+  if (!draw) return null;
+  const rows = coupon.tickets.map((tk) => {
+    const hits = tk.map((nums, i) => nums.filter((x) => draw.pools[i].includes(x)).length);
+    return { tk, hits, tier: game.tiers.find((tier) => tier.hits.every((h, i) => h === hits[i])) || null };
+  });
+  const fixed = rows.reduce((s, r) => s + (r.tier && r.tier.fixed ? r.tier.fixed : 0), 0);
+  return { draw, rows, fixed, pool: rows.filter((r) => r.tier && !r.tier.fixed).length };
+}
+
+const hitSum = (r) => r.hits.reduce((s, h) => s + h, 0);
+
+function couponsCard(view, id, game) {
+  const coupons = couponsOf(id);
+  if (!coupons.length) return null;
+  const draws = state.history[id] || [];
+  const last = draws.length ? draws[draws.length - 1].date : '';
+  const cur = game.price.currency;
+  const remove = async (c) => {
+    await saveGameSettings(id, { coupons: couponsOf(id).filter((x) => x.id !== c.id) });
+    view.replaceChildren(); renderGenerator(view, id);
+  };
+  let spent = 0; let won = 0;
+  const items = coupons.slice().reverse().map((c) => {
+    const res = checkCoupon(c, draws, game);
+    const cost = c.tickets.length * (c.price || game.price.amount);
+    if (res) { spent += cost; won += res.fixed; }
+    const status = res
+      ? el('span', { class: res.fixed || res.pool ? 'good' : 'muted' }, res.fixed || res.pool ? t('coupons.won', { fixed: money(res.fixed, cur), pool: res.pool }) : t('coupons.nothing'))
+      : el('span', { class: 'warn' }, c.drawDate > last ? t('coupons.waiting') : t('coupons.noDraw'));
+    const head = el('div', { class: 'coupon-head' },
+      el('strong', {}, date(c.drawDate)),
+      el('span', { class: 'muted' }, c.system ? t('coupons.system', { m: c.system.length, n: num(c.tickets.length) }) : t('coupons.tickets', { n: num(c.tickets.length) })),
+      el('span', { class: 'muted' }, money(cost, cur)),
+      status,
+      el('button', { class: 'icon-btn', title: t('coupons.remove'), onClick: () => remove(c) }, '✕'));
+    const yours = c.system ? el('div', { class: 'ticket' }, el('span', { class: 'muted' }, t('coupons.yourNumbers')), balls([c.system])) : null;
+    if (!res) return el('div', { class: 'coupon' }, head, yours, c.system ? null : el('div', { class: 'tickets' }, c.tickets.map((tk) => el('div', { class: 'ticket' }, balls(tk)))));
+    const shown = c.system ? res.rows.slice().sort((a, b) => hitSum(b) - hitSum(a)).slice(0, 10) : res.rows;
+    return el('div', { class: 'coupon' }, head,
+      el('div', { class: 'ticket' }, el('span', { class: 'muted' }, t('coupons.result')), balls(res.draw.pools)),
+      yours,
+      el('div', { class: 'tickets' }, shown.map((r) => el('div', { class: 'ticket' + (r.tier ? '' : ' dim') }, balls(r.tk),
+        el('span', { class: 'pop' + (r.tier ? ' good' : '') }, t('coupons.hits', { hits: r.hits.join('+') }) + (r.tier ? ' → ' + (r.tier.fixed ? money(r.tier.fixed, cur) : t('coupons.poolPrize', { tier: r.tier.id })) : ''))))));
+  });
+  return card(t('coupons.title', { n: num(coupons.length) }),
+    spent ? el('p', {}, t('coupons.balance', { spent: money(spent, cur), won: money(won, cur) })) : null,
+    ...items,
+    hint(t('coupons.hint')));
 }
