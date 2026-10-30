@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-30
+
 ### Added
 - **Your numbers** (Generator): pick the numbers by clicking or type them; the app shows which active filters
   the ticket breaks, how popular it is, its closest past results and a rating — the chance stays the same for
@@ -162,7 +164,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Banzamel/WinRate/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Banzamel/WinRate/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Banzamel/WinRate/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/Banzamel/WinRate/compare/v0.2.8...v0.2.9
