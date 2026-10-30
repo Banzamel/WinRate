@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-30
+
 ### Changed
 - Buttons that start longer work ("Choose numbers for me", "Use my numbers", wheels, history download,
   import, export and adding a draw) show a spinner and stay disabled until the app has finished.
@@ -118,7 +120,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/Banzamel/WinRate/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/Banzamel/WinRate/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/Banzamel/WinRate/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/Banzamel/WinRate/compare/v0.2.2...v0.2.3
