@@ -10,7 +10,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const changelogPath = path.join(root, 'CHANGELOG.md');
-const repo = 'https://github.com/Banzamel/PrimeWinRate';
+const repo = 'https://github.com/Banzamel/WinRate';
 const fail = (msg) => { console.error(`✖ ${msg}`); process.exit(1); };
 
 function stamp() {

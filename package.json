@@ -6,13 +6,13 @@
   "main": "src/main/main.js",
   "author": "Rafał Polak (Banzamel)",
   "license": "MIT",
-  "homepage": "https://github.com/Banzamel/PrimeWinRate#readme",
+  "homepage": "https://github.com/Banzamel/WinRate#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Banzamel/PrimeWinRate.git"
+    "url": "https://github.com/Banzamel/WinRate.git"
   },
   "bugs": {
-    "url": "https://github.com/Banzamel/PrimeWinRate/issues"
+    "url": "https://github.com/Banzamel/WinRate/issues"
   },
   "keywords": [
     "lottery",
@@ -76,7 +76,7 @@
       {
         "provider": "github",
         "owner": "Banzamel",
-        "repo": "PrimeWinRate",
+        "repo": "WinRate",
         "releaseType": "release"
       }
     ]

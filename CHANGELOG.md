@@ -50,5 +50,5 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/PrimeWinRate/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Banzamel/PrimeWinRate/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Banzamel/WinRate/releases/tag/v0.1.0

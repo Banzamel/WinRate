@@ -2,15 +2,15 @@
 
 # PrimeWinRate
 
-[![Build & release](https://github.com/Banzamel/PrimeWinRate/actions/workflows/release.yml/badge.svg)](https://github.com/Banzamel/PrimeWinRate/actions/workflows/release.yml)
-[![GitHub release](https://img.shields.io/github/release/banzamel/primewinrate.svg)](https://github.com/Banzamel/PrimeWinRate/releases)
+[![Build & release](https://github.com/Banzamel/WinRate/actions/workflows/release.yml/badge.svg)](https://github.com/Banzamel/WinRate/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/release/banzamel/winrate.svg)](https://github.com/Banzamel/WinRate/releases)
 
 Windows app for **Lotto** and **Eurojackpot**: full draw history, exact odds, statistics, filters, ticket
 generator and simulations on past draws. Polish and English.
 
 ## Install
 
-1. Download `PrimeWinRate-Setup-<version>.exe` from [Releases](https://github.com/Banzamel/PrimeWinRate/releases/latest)
+1. Download `PrimeWinRate-Setup-<version>.exe` from [Releases](https://github.com/Banzamel/WinRate/releases/latest)
 2. Run it and pick the install folder (SmartScreen warning: **More info → Run anyway** — the app is not signed)
 
 The app updates itself: when a new version is out it shows a banner — **Download**, then **Restart and install**.
@@ -34,5 +34,5 @@ Each game has its own tab:
   Its real gains: fewer tickets per covered shape, and tickets few others play (a win is shared less).
 - All data is stored in the `data` folder inside the install folder; uninstalling removes everything.
 - Play responsibly — help with gambling problems in Poland: 801 889 880.
-- Changes in each version: [Releases](https://github.com/Banzamel/PrimeWinRate/releases) ·
+- Changes in each version: [Releases](https://github.com/Banzamel/WinRate/releases) ·
   new version: Actions → **Publish new version** → Run workflow.
