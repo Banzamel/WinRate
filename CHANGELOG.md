@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-30
+
 ### Added
 - **Saved coupons**: "Save coupon" next to the generated tickets and the system bet keeps them for the next
   draw; once its result is downloaded (automatically at start) every ticket shows its hits and prize, with the
@@ -155,7 +157,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Banzamel/WinRate/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Banzamel/WinRate/compare/v0.2.9...v0.3.0
 [0.2.9]: https://github.com/Banzamel/WinRate/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/Banzamel/WinRate/compare/v0.2.7...v0.2.8
