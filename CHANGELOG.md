@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
 ### Fixed
 - Eurojackpot history downloads again: mbnet.com.pl moved its results to `bazy/eurojackpot.csv` (the old
   `ej.txt` returns 404); Lotto uses `bazy/lotto.csv` with the old `dl.txt` as a fallback.
@@ -73,6 +75,7 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Banzamel/WinRate/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Banzamel/WinRate/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Banzamel/WinRate/releases/tag/v0.1.0
