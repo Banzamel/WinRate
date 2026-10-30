@@ -16,12 +16,16 @@ export function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+// Appends the nodes, skipping the ones a view left out (null / false).
+export const mount = (root, ...nodes) => root.append(...nodes.filter((n) => n !== null && n !== undefined && n !== false));
+
 // Lottery balls: main numbers gold, extra-pool (Euro) numbers blue.
 export const ball = (n, { extra = false, small = false, hit = false } = {}) => el('span', { class: `ball ${extra ? 'extra' : ''} ${small ? 'small' : ''} ${hit ? 'hit' : ''}` }, String(n));
 export const balls = (pools, opts = {}) => el('span', { class: 'balls' }, pools.map((nums, i) => nums.map((n) => ball(n, { ...opts, extra: i > 0, hit: opts.hits && opts.hits[i] && opts.hits[i].includes(n) }))));
 
 export const card = (title, ...children) => el('section', { class: 'card' }, title ? el('h2', {}, title) : null, ...children);
-export const hint = (text) => el('p', { class: 'hint' }, text);
+// Explanations stay folded under "i" so the screens show results, not paragraphs.
+export const hint = (text) => el('details', { class: 'info' }, el('summary', {}, t('common.more')), el('p', {}, text));
 export const stat = (label, value, sub) => el('div', { class: 'stat' }, el('span', { class: 'stat-label' }, label), el('strong', {}, value), sub ? el('span', { class: 'stat-sub' }, sub) : null);
 
 export function tabs(items, active, onSelect) {

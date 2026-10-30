@@ -1,7 +1,7 @@
 // History: download, import, export, manual entry and the list of all draws.
 import { t, num, date } from '../js/i18n.js';
 import { state, loadHistory, historyChanged } from '../js/store.js';
-import { el, card, balls, toast, hint } from '../js/ui.js';
+import { el, card, balls, toast, hint, mount } from '../js/ui.js';
 
 const PAGE = 100;
 
@@ -48,7 +48,7 @@ export function renderHistory(body, id) {
   };
   fill();
 
-  body.append(
+  mount(body, 
     el('div', { class: 'grid-2' },
       card(t('history.sources'),
         el('div', { class: 'btn-row' }, downloadBtn, importBtn, exportBtn),

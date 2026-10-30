@@ -33,3 +33,11 @@ test('tickets of a coupon share at most maxCommon numbers', () => {
     assert.ok(tickets[i][0].filter((x) => tickets[j][0].includes(x)).length <= 1);
   }
 });
+
+test('system numbers whose bets all pass the filters', () => {
+  const { systemNumbers } = require('../src/main/engine/simulate');
+  const { defaultFilters } = require('../src/main/engine/filters');
+  const r = systemNumbers(GAMES.lotto, [], { m: 9, config: defaultFilters(GAMES.lotto.pools[0]), seed: 9 });
+  assert.strictEqual(r.pass, 84);
+  assert.strictEqual(r.numbers.length, 9);
+});

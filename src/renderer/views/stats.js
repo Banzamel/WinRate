@@ -1,35 +1,35 @@
 // Statistics: is the draw fair? Frequencies, hot/cold, gaps, pairs, patterns, repeats —
 // each against the exact expectation of a fair draw, with a chi-square test.
 import { t, num, pct, date } from '../js/i18n.js';
-import { state } from '../js/store.js';
-import { el, card, hint, table, ball, balls, compareBars, numberChart, fitBadge, spinner, numberInput, select } from '../js/ui.js';
+import { state, advanced } from '../js/store.js';
+import { el, card, hint, table, ball, balls, compareBars, numberChart, fitBadge, spinner, numberInput, select, mount } from '../js/ui.js';
 import { runJob } from './game.js';
 import { ballEffect } from '../js/physics.js';
 
 export function renderStats(body, id) {
   const report = state.report[id];
   const draws = state.history[id];
-  if (!draws.length) { body.append(card(null, el('p', { class: 'muted' }, t('history.emptyGo')))); return; }
+  if (!draws.length) { mount(body, card(null, el('p', { class: 'muted' }, t('history.emptyGo')))); return; }
   if (!report) {
-    body.append(card(null, spinner(t('stats.computing')), hint(t('stats.firstTime'))));
+    mount(body, card(null, spinner(t('stats.computing')), hint(t('stats.firstTime'))));
     runJob('stats', body, id, async () => { state.report[id] = await window.api.report(id, { recent: state.recent || 50 }); }, renderStats)
       .catch((e) => { body.replaceChildren(card(null, el('p', { class: 'bad' }, e.message))); });
     return;
   }
   const game = state.games[id];
   const main = report.pools[0];
-  body.append(
+  mount(body, 
     card(t('stats.verdict'),
-      el('p', {}, t('stats.verdictText', { draws: num(report.draws), from: date(report.from), to: date(report.to) })),
+      el('p', { class: 'muted' }, t('stats.verdictShort', { draws: num(report.draws), from: date(report.from), to: date(report.to) })),
       el('div', { class: 'verdicts' },
         verdictRow(t('stats.v.numbers'), main.fit),
         report.pools[1] ? verdictRow(t('stats.v.extra'), report.pools[1].fit) : null,
         verdictRow(t('stats.v.pairs'), report.pairs.fit),
         verdictRow(t('stats.v.repeats'), report.repeats.fit),
-        report.patterns ? Object.entries(report.patterns).map(([metric, p]) => verdictRow(t(`metric.${metric}`), p.fit)) : null),
+        advanced() && report.patterns ? Object.entries(report.patterns).map(([metric, p]) => verdictRow(t(`metric.${metric}`), p.fit)) : null),
       hint(t('stats.verdictHint'))),
-    report.bias && report.bias[0] ? biasCard(report, game, draws) : null,
-    physicsCard(game),
+    advanced() && report.bias && report.bias[0] ? biasCard(report, game, draws) : null,
+    advanced() ? physicsCard(game) : null,
     ...report.pools.map((pool, i) => card(t(i ? 'stats.freqExtra' : 'stats.freq'),
       numberChart(pool.numbers.map((x) => ({ n: x.n, value: x.count, z: x.z })), pool.expected, { extra: i > 0 }),
       hint(t('stats.freqHint', { expected: num(pool.expected, 1) })))),
@@ -45,7 +45,7 @@ export function renderStats(body, id) {
         hint(t('stats.gapsHint')))),
     pairsCard(report, game),
     report.neighbours ? neighboursCard(report.neighbours) : null,
-    report.patterns ? patternsCard(report.patterns) : null,
+    advanced() && report.patterns ? patternsCard(report.patterns) : null,
     el('div', { class: 'grid-2' },
       card(t('stats.repeats'),
         compareBars(report.repeats.observed.map((o, h) => ({ label: t('stats.repeatN', { n: h }), observed: o, expected: report.repeats.expected[h] }))),
@@ -63,7 +63,7 @@ function biasCard(report, game, draws) {
   const pTone = (p) => (p < 0.01 ? 'bad' : p < 0.05 ? 'warn' : 'good');
   const pBadge = (p) => el('span', { class: `fit ${pTone(p)}` }, `p ${p < 0.0001 ? `< ${num(0.0001, 4)}` : `= ${num(p, 4)}`} · ${t(`stats.fit.${pTone(p)}`)}`);
   return card(t('bias.title'),
-    el('p', {}, t('bias.intro')),
+    hint(t('bias.intro')),
     ...report.bias.map((b, i) => {
       if (!b) return null;
       const post = b.posterior;
@@ -168,7 +168,7 @@ function physicsCard(game) {
     input('massG', t('physics.mass'), 0.1), input('spreadG', t('physics.spread'), 0.01), input('diameterMm', t('physics.diameter'), 1),
     el('label', {}, t('physics.sensitivity'), select(opts.sensitivity, [[0.5, t('physics.beta.half')], [1, t('physics.beta.one')], [2, t('physics.beta.two')]], (v) => { opts.sensitivity = Number(v); update(); })));
   fill(); update();
-  return card(t('physics.title'), el('p', {}, t('physics.intro')), form, out, hint(t('physics.hint')));
+  return card(t('physics.title'), hint(t('physics.intro')), form, out, hint(t('physics.hint')));
 }
 
 // Which number comes next to which in the sorted results, against the exact expectation.
@@ -176,7 +176,7 @@ function neighboursCard(nb) {
   const row = (p) => [el('span', { class: 'balls' }, ball(p.a, { small: true }), '→', ball(p.b, { small: true })), num(p.count), num(p.expected, 1), num(p.z, 2)];
   const head = [t('stats.pair'), t('stats.together'), t('stats.expected'), 'z'];
   return card(t('nb.title'),
-    el('p', {}, t('nb.intro')),
+    hint(t('nb.intro')),
     el('div', { class: 'grid-2' },
       el('div', {}, el('h3', {}, t('nb.often')), table(head, nb.strongest.slice(0, 10).map(row))),
       el('div', {}, el('h3', {}, t('nb.rarely')), table(head, nb.weakest.slice(0, 10).map(row)))),

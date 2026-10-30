@@ -111,7 +111,7 @@ function defaultFilters(pool) {
     maxRun: 2,
     maxAP: 3,
     maxDecade: 3,
-    maxEnding: 2,
+    maxEnding: 3,
     maxRow: 3,
     maxCol: 3,
     minSpread: Math.round(n / 3),

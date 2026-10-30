@@ -1,7 +1,7 @@
 // Generator: tickets for the next draw with a strategy and the active filters.
 import { t, num, money, pct } from '../js/i18n.js';
-import { state, gameSettings, saveGameSettings } from '../js/store.js';
-import { el, card, hint, balls, numberInput, select, spinner, toast, table } from '../js/ui.js';
+import { state, gameSettings, saveGameSettings, advanced } from '../js/store.js';
+import { el, card, hint, balls, numberInput, select, spinner, toast, table, mount } from '../js/ui.js';
 import { runJob } from './game.js';
 
 export function renderGenerator(body, id) {
@@ -14,7 +14,7 @@ export function renderGenerator(body, id) {
     runJob('generate', body, id, async () => { state.tickets[id] = { ...(await window.api.generate(id, opts)), strategy: opts.strategy }; }, renderGenerator)
       .catch((e) => toast(e.message, 'bad'));
   } }, t('generator.go'));
-  body.append(
+  mount(body, 
     card(t('generator.title'),
       el('div', { class: 'form-row' },
         el('label', {}, t('generator.strategy'), select(opts.strategy, state.strategies.map((s) => [s, t(`strategy.${s}`)]), (v) => { set({ strategy: v }); body.replaceChildren(); renderGenerator(body, id); })),
@@ -23,8 +23,7 @@ export function renderGenerator(body, id) {
         ['hot', 'cold'].includes(opts.strategy) ? el('label', {}, t('generator.recent'), numberInput(opts.recent, { min: 5, max: 1000, onChange: (v) => set({ recent: v || 50 }) })) : null,
         opts.strategy === 'bayes' ? el('label', {}, t('generator.halfLife'), numberInput(opts.halfLife, { min: 0, max: 10000, onChange: (v) => set({ halfLife: v || 0 }) })) : null,
         go),
-      hint(t(`strategy.${opts.strategy}.hint`)),
-      opts.strategy === 'random' ? null : hint(t('generator.filtersNote'))),
+      hint(`${t(`strategy.${opts.strategy}.hint`)}${opts.strategy === 'random' ? '' : ` ${t('generator.filtersNote')}`}`)),
     out ? card(t('generator.tickets', { n: num(out.tickets.length) }),
       el('div', { class: 'tickets' }, out.tickets.map((tk, i) => el('div', { class: 'ticket' }, el('span', { class: 'muted' }, `${i + 1}.`), balls(tk),
         out.popularity ? el('span', { class: `pop ${out.popularity[i] > 3 ? 'bad' : out.popularity[i] < 0.7 ? 'good' : ''}`, title: t('generator.popularityTitle') }, t('generator.popularity', { x: num(out.popularity[i], out.popularity[i] < 10 ? 2 : 0) })) : null))),
@@ -33,7 +32,7 @@ export function renderGenerator(body, id) {
         el('span', { class: 'muted' }, t('generator.cost', { cost: money(out.tickets.length * game.price.amount, game.price.currency) }))),
       hint(t('generator.honest', { odds: num(game.combinations / out.tickets.length) }))) : null,
     game.system ? systemCard(id, game) : null,
-    wheelCard(id, game),
+    advanced() ? wheelCard(id, game) : null,
   );
 }
 
@@ -54,7 +53,7 @@ function wheelCard(id, game) {
     } }, t('wheel.go'));
     const r = st.result;
     body.replaceChildren(
-      el('p', {}, t('wheel.intro', { k: pool.pick })),
+      hint(t('wheel.intro', { k: pool.pick })),
       picker,
       el('div', { class: 'form-row' },
         el('span', { class: 'muted' }, t('wheel.chosen', { n: st.numbers.length })),
@@ -97,7 +96,7 @@ function systemCard(id, game) {
     const r = st.result;
     const cost = r ? r.table.bets * game.price.amount : 0;
     body.replaceChildren(
-      el('p', {}, t('system.intro', { min: game.system.min, max: game.system.max })),
+      hint(t('system.intro', { min: game.system.min, max: game.system.max })),
       el('div', { class: 'form-row' },
         el('label', {}, t('system.size'), select(st.m, Array.from({ length: game.system.max - game.system.min + 1 }, (_, i) => game.system.min + i).map((m) => [m, t('system.sizeN', { m, bets: comb(m, pool.pick), cost: money(comb(m, pool.pick) * game.price.amount, game.price.currency) })]), (v) => { st.m = Number(v); st.numbers = st.numbers.slice(0, st.m); st.result = null; draw(); })),
         el('button', { class: 'btn primary', onClick: run(true) }, t('system.auto')),

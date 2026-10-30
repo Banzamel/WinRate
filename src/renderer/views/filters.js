@@ -2,7 +2,7 @@
 // the real draws would have survived them (the honest test of a filter).
 import { t, num, pct } from '../js/i18n.js';
 import { state, filtersOf, saveGameSettings } from '../js/store.js';
-import { el, card, hint, table, numberInput, spinner, toast } from '../js/ui.js';
+import { el, card, hint, table, numberInput, spinner, toast, mount } from '../js/ui.js';
 import { runJob } from './game.js';
 
 // Presets: none, light (~32 % of Lotto), the default (~47 %) and a strict one.
@@ -37,9 +37,9 @@ export function renderFilters(body, id) {
       .catch((e) => toast(e.message, 'bad'));
   } }, t('filters.calculate'));
 
-  body.append(
+  mount(body, 
     card(t('filters.title'),
-      el('p', {}, t('filters.intro')),
+      hint(t('filters.intro')),
       el('div', { class: 'btn-row' },
         Object.entries(presets(game)).map(([name, preset]) => el('button', { class: 'btn', onClick: () => save({ ...preset }) }, t(`filters.preset.${name}`))),
         calc),

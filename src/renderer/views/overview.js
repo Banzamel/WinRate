@@ -1,14 +1,14 @@
 // Overview: rules, schedule, exact odds of every prize tier and the latest draws.
 import { t, num, pct, money, date } from '../js/i18n.js';
-import { state } from '../js/store.js';
-import { el, card, stat, table, balls, hint, numberInput } from '../js/ui.js';
+import { state, advanced } from '../js/store.js';
+import { el, card, stat, table, balls, hint, numberInput, mount } from '../js/ui.js';
 
 export function renderOverview(body, id) {
   const game = state.games[id];
   const draws = state.history[id];
   const weekdays = game.schedule.weekdays.map((d) => new Intl.DateTimeFormat(document.documentElement.lang, { weekday: 'long' }).format(new Date(Date.UTC(2024, 0, 7 + d)))).join(', ');
   const rules = game.pools.map((p, i) => t(i === 0 ? 'rules.main' : 'rules.extra', { pick: p.pick, size: p.size })).join(' + ');
-  body.append(
+  mount(body, 
     el('div', { class: 'stats-row' },
       stat(t('rules.game'), rules),
       stat(t('rules.price'), money(game.price.amount, game.price.currency)),
@@ -27,10 +27,10 @@ export function renderOverview(body, id) {
         el('div', { class: 'stats-row compact' },
           stat(t('overview.stored'), num(draws.length)),
           draws.length ? stat(t('overview.range'), `${date(draws[0].date)} – ${date(draws[draws.length - 1].date)}`) : null),
-        el('h3', {}, t('overview.eras')),
-        el('ul', { class: 'plain' }, game.eras.map((e) => el('li', {}, `${date(e.from)}: ${e.pools.map((p) => `${p.pick}/${p.size}`).join(' + ')}`))))),
-    evCard(id, game),
-    card(t('overview.truth'), el('p', {}, t('overview.truthText', { n: num(game.combinations), years: num(game.combinations / game.drawsPerYear, 0) }))),
+        advanced() ? el('h3', {}, t('overview.eras')) : null,
+        advanced() ? el('ul', { class: 'plain' }, game.eras.map((e) => el('li', {}, `${date(e.from)}: ${e.pools.map((p) => `${p.pick}/${p.size}`).join(' + ')}`))) : null)),
+    advanced() ? evCard(id, game) : null,
+    card(t('overview.truth'), hint(t('overview.truthText', { n: num(game.combinations), years: num(game.combinations / game.drawsPerYear, 0) }))),
   );
 }
 

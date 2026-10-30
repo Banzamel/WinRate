@@ -108,7 +108,7 @@ async function refreshHistories() {
 function createWindow() {
   win = new BrowserWindow({
     width: 1360, height: 880, minWidth: 1100, minHeight: 700,
-    frame: false, backgroundColor: '#0b0f14', show: false,
+    frame: false, backgroundColor: '#eef2f8', show: false,
     icon: path.join(ROOT, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });

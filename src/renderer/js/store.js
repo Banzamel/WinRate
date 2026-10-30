@@ -20,6 +20,9 @@ const listeners = new Set();
 export const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export const emit = (what) => listeners.forEach((fn) => fn(what));
 
+// Advanced mode shows the scientific extras (physics, patterns, backtests…); off by default.
+export const advanced = () => !!(state.settings && state.settings.advanced);
+
 export const gameSettings = (id) => (state.settings.games && state.settings.games[id]) || {};
 export const filtersOf = (id) => gameSettings(id).filters || state.games[id].defaultFilters;
 

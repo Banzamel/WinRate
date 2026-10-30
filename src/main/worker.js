@@ -112,8 +112,17 @@ const TASKS = {
   },
 
   // One or more past draws, each played "until it hits".
-  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife, cacheDir }, progress) {
+  untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife, cacheDir, system }, progress) {
     const g = getGame(game);
+    if (system) {
+      const results = targets.map((index, i) => {
+        const r = sim.untilHitSystem(g, draws, { index, m: system, strategy, config, recent, halfLife, maxAttempts: Math.min(maxAttempts, 5e7),
+          onProgress: (p, attempts) => progress((i + p) / targets.length, { target: i, attempts }) });
+        progress((i + 1) / targets.length, { target: i, done: r });
+        return r;
+      });
+      return { results };
+    }
     const fixed = strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
     const results = [];
     targets.forEach((index, i) => {

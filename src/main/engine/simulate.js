@@ -272,9 +272,11 @@ function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttemp
 
 module.exports = { STRATEGIES, createRng, numberWeights, weightedPick, createPlayer, hitsOf, eraDraws, fixedCensus, generate, backtest, untilHit };
 
-// Numbers for a system bet of m numbers: from many random m-sets (weighted like the strategy),
-// the one whose C(m, 6) bets pass the filters most often. Returns the numbers and that share.
-function systemNumbers(game, draws, { m, strategy = 'filtered', config, seed, tries = 3000, recent = 50, halfLife = 0 } = {}) {
+// Numbers for a system bet of m numbers whose C(m, 6) bets all pass the filters, if such numbers
+// exist: random m-sets weighted like the strategy are improved by swapping one number at a time
+// (hill climbing with restarts) until every bet passes. Returns the best set found and its share.
+function systemNumbers(game, draws, { m, strategy = 'filtered', config, seed, restarts = 60, recent = 50, halfLife = 0, timeLimit = 8000 } = {}) {
+  const deadline = Date.now() + timeLimit;
   const era = eraDraws(game, draws);
   const pool = currentEra(game).pools[0];
   const ctx = new HistoryContext(pool, era.map((d) => d.pools[0]));
@@ -282,16 +284,81 @@ function systemNumbers(game, draws, { m, strategy = 'filtered', config, seed, tr
   const rng = createRng(seed);
   const weights = numberWeights(['random', 'filtered', 'unpopular'].includes(strategy) ? 'random' : strategy, pool.size, pool.pick, era.map((d) => d.pools[0]), recent, halfLife);
   const { forEachCombination } = require('./combinatorics');
-  let best = null;
+  const total = binom(m, pool.pick);
   const sub = new Array(pool.pick);
-  for (let t = 0; t < tries; t++) {
-    const nums = weightedPick(rng, weights, pool.size, m, null, new Array(m));
-    let pass = 0; let total = 0;
-    forEachCombination(m, pool.pick, (idx) => { for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1]; total++; if (!check(sub)) pass++; });
-    if (!best || pass > best.pass) best = { numbers: nums.slice(), pass, total };
-    if (pass === total) break;
+  const passing = (nums) => {
+    let pass = 0;
+    forEachCombination(m, pool.pick, (idx) => { for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1]; if (!check(sub)) pass++; });
+    return pass;
+  };
+  let best = null;
+  for (let r = 0; r < restarts; r++) {
+    let nums = weightedPick(rng, weights, pool.size, m, null, new Array(m)).slice();
+    let score = passing(nums);
+    for (let improved = true; improved && score < total && Date.now() < deadline;) {
+      improved = false;
+      // Try every single swap; take the first one that helps (positions and numbers in random order).
+      const order = Array.from({ length: m }, (_, i) => i).sort(() => rng.next() - 0.5);
+      for (const i of order) {
+        const start = 1 + rng.int(pool.size);
+        for (let s2 = 0; s2 < pool.size && !improved; s2++) {
+          const x = ((start + s2 - 1) % pool.size) + 1;
+          if (nums.includes(x)) continue;
+          const next = nums.slice(); next[i] = x; next.sort((p, q) => p - q);
+          const sc = passing(next);
+          if (sc > score) { nums = next; score = sc; improved = true; }
+        }
+        if (improved) break;
+      }
+    }
+    if (!best || score > best.pass) best = { numbers: nums, pass: score, total };
+    if (score === total || Date.now() >= deadline) break;
   }
   return { ...best, share: best.pass / best.total };
 }
 
 module.exports.systemNumbers = systemNumbers;
+
+// "Until it hits" with system bets: every attempt marks m numbers (uniformly, or weighted like the
+// strategy) and plays the C(m, 6) bets of them that pass the filters. Counts attempts and bets until
+// one bet is the result of the past draw `index` (known draws: only the ones before it).
+function untilHitSystem(game, draws, { index, m, strategy = 'filtered', config, maxAttempts = 2e7, seed, recent = 50, halfLife = 0, onProgress } = {}) {
+  const era = eraDraws(game, draws);
+  if (index < 0) index += era.length;
+  const target = era[index];
+  if (!target) throw new Error('no such draw');
+  const pool = currentEra(game).pools[0];
+  const known = era.slice(0, index);
+  const ctx = new HistoryContext(pool, known.map((d) => d.pools[0]));
+  const useFilters = strategy !== 'random' && config;
+  const check = useFilters ? createChecker(pool, game.slipColumns, config, ctx) : null;
+  const base = { date: target.date, numbers: target.pools, strategy, system: m, combinations: binom(pool.size, pool.pick) };
+  if (check) {
+    const mask = check(target.pools[0]);
+    if (mask) return { ...base, excluded: true, failed: FILTERS.filter((f, i) => mask & (1 << i)).map((f) => f.id), attempts: 0, bets: 0 };
+  }
+  const rng = createRng(seed);
+  const weights = numberWeights(['random', 'filtered', 'unpopular'].includes(strategy) ? 'random' : strategy, pool.size, pool.pick, known.map((d) => d.pools[0]), recent, halfLife);
+  const { forEachCombination } = require('./combinatorics');
+  const inTarget = new Uint8Array(pool.size + 1);
+  for (const x of target.pools[0]) inTarget[x] = 1;
+  const nums = new Array(m); const sub = new Array(pool.pick);
+  const perSystem = binom(m, pool.pick);
+  const started = Date.now();
+  let attempts = 0; let bets = 0;
+  for (;;) {
+    weightedPick(rng, weights, pool.size, m, null, nums);
+    attempts++;
+    let hits = 0;
+    for (let i = 0; i < m; i++) hits += inTarget[nums[i]];
+    if (check) {
+      forEachCombination(m, pool.pick, (idx) => { for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1]; if (!check(sub)) bets++; });
+    } else bets += perSystem;
+    if (hits === pool.pick) return { ...base, hit: true, attempts, bets, expectedAttempts: base.combinations / perSystem, ms: Date.now() - started };
+    if (attempts >= maxAttempts) return { ...base, hit: false, attempts, bets, expectedAttempts: base.combinations / perSystem, ms: Date.now() - started };
+    if (onProgress && (attempts & 0x3fff) === 0) onProgress(attempts / maxAttempts, attempts);
+  }
+}
+
+module.exports.untilHitSystem = untilHitSystem;
+

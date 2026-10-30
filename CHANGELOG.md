@@ -25,8 +25,14 @@ moves them into a numbered section automatically (see README → Releasing).
 - **Which number comes next to which**: neighbour pairs in the sorted results against their exact expectation.
 - **Lotto system bets** (7–12 numbers): prize table for every outcome, numbers chosen to pass the filters.
 - Generator: at most N numbers shared by any two tickets of a coupon.
+- "Choose numbers for me" finds system numbers whose bets all pass the filters (7–9 numbers; for 10–12 the
+  closest possible).
+- "Until it hits" with Lotto system bets (7–12 numbers): systems tried and bets played until the six is hit.
+- Light theme in navy, yellow and white; explanations folded under "How does it work?"; a simple view by
+  default with the scientific tools in Advanced mode (Settings); the Generator tab comes second.
 
 ### Changed
+- Same last digit: up to 3 numbers allowed (the 8 Oct 2026 result 3-27-29-33-42-43 has three 3s).
 - Lotto costs 5 zł per bet and pays 35 zł for three hits since 18 August 2026.
 - All data (history, settings, caches) is kept in the `data` folder inside the install folder; uninstalling
   removes everything, updates keep it.
