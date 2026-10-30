@@ -7,6 +7,10 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- Simpler Simulation: no strategy, window or memory to choose — the backtest and "until it hits" play the
+  Generator's tickets (all active filters) next to a plain random player.
+
 ## [0.2.2] - 2026-10-30
 
 ### Changed

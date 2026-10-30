@@ -1,6 +1,6 @@
 // Simulation (science mode): replays the past as if the future were unknown.
-//  - Backtest: for each of the last N draws only the earlier ones are known; the strategy plays
-//    K tickets and they are scored against the real result, next to a plain random player.
+//  - Backtest: for each of the last N draws only the earlier ones are known; a player using the
+//    active filters (the Generator's tickets) plays K tickets and they are scored against the real result, next to a plain random player.
 //  - Until it hits: for a past draw (result known to the referee only) tickets are drawn until one
 //    matches, counting the attempts — and what they would have cost.
 import { t, num, pct, money, date } from '../js/i18n.js';
@@ -10,8 +10,10 @@ import { runJob } from './game.js';
 
 export function renderSimulation(body, id) {
   const game = state.games[id];
-  const opts = { strategy: 'filtered', tickets: 10, tests: 200, targets: 1, maxAttempts: id === 'lotto' ? 1e8 : 1e9, recent: 50, halfLife: 0, system: 0, ...(gameSettings(id).simulation || {}) };
-  const set = (patch) => { Object.assign(opts, patch); saveGameSettings(id, { simulation: { ...opts } }); };
+  // Same tickets as the Generator: every one passes the active filters (no strategy to choose).
+  const { strategy, recent, halfLife, ...saved } = gameSettings(id).simulation || {};
+  const opts = { tickets: 10, tests: 200, targets: 1, maxAttempts: id === 'lotto' ? 1e8 : 1e9, system: 0, ...saved, strategy: 'filtered' };
+  const set = (patch) => { Object.assign(opts, patch); const { strategy: _s, ...keep } = opts; saveGameSettings(id, { simulation: keep }); };
   const running = !!state.jobs.sim;
   const progress = el('div', { class: 'sim-progress' }, running ? progressBar(state.jobs.sim.progress || 0) : null);
   const off = subscribe((e) => {
@@ -25,8 +27,8 @@ export function renderSimulation(body, id) {
     progress.replaceChildren(progressBar(0), el('button', { class: 'btn ghost', onClick: () => window.api.cancel('sim') }, t('common.cancel')));
     const draws = state.history[id].length;
     const job = kind === 'backtest'
-      ? () => window.api.backtest(id, { strategy: opts.strategy, tickets: opts.tickets, tests: Math.min(opts.tests, draws - 1), recent: opts.recent, halfLife: opts.halfLife })
-      : () => window.api.untilHit(id, { strategy: opts.strategy, targets: Array.from({ length: Math.min(opts.targets, draws) }, (_, i) => -1 - i), maxAttempts: opts.maxAttempts, recent: opts.recent, halfLife: opts.halfLife, system: opts.system || 0 });
+      ? () => window.api.backtest(id, { strategy: opts.strategy, tickets: opts.tickets, tests: Math.min(opts.tests, draws - 1) })
+      : () => window.api.untilHit(id, { strategy: opts.strategy, targets: Array.from({ length: Math.min(opts.targets, draws) }, (_, i) => -1 - i), maxAttempts: opts.maxAttempts, system: opts.system || 0 });
     runJob('sim', body, id, async () => { state[kind][id] = { ...(await job()), opts: { ...opts } }; }, renderSimulation)
       .catch((e) => { if (e.message.includes('cancelled')) toast(t('sim.cancelled')); else toast(e.message, 'bad'); });
   };
@@ -34,10 +36,6 @@ export function renderSimulation(body, id) {
   mount(body, 
     card(t('sim.title'),
       hint(t('sim.intro')),
-      el('div', { class: 'form-row' },
-        el('label', {}, t('generator.strategy'), select(opts.strategy, state.strategies.map((s) => [s, t(`strategy.${s}`)]), (v) => set({ strategy: v }))),
-        el('label', {}, t('sim.recent'), numberInput(opts.recent, { min: 5, max: 1000, onChange: (v) => set({ recent: v || 50 }) })),
-        advanced() ? el('label', {}, t('generator.halfLife'), numberInput(opts.halfLife, { min: 0, max: 10000, onChange: (v) => set({ halfLife: v || 0 }) })) : null),
       progress),
     el('div', { class: 'sim-cards' },
       !advanced() ? null : card(t('sim.backtest'),
@@ -66,8 +64,8 @@ function backtestResult(r, game) {
   const diff = r.strategy.any - r.random.any;
   const sd = Math.sqrt(2 * total * game.anyPrize * (1 - game.anyPrize)) || 1;
   return el('div', { class: 'result' },
-    el('p', {}, t('sim.backtestSummary', { draws: num(r.draws), from: date(r.from), to: date(r.to), tickets: num(r.tickets), total: num(total), strategy: t(`strategy.${r.opts.strategy}`) })),
-    table([t('rules.tier'), t(`strategy.${r.opts.strategy}`), t('strategy.random'), t('sim.expected')], rows),
+    el('p', {}, t('sim.backtestSummary', { draws: num(r.draws), from: date(r.from), to: date(r.to), tickets: num(r.tickets), total: num(total) })),
+    table([t('rules.tier'), t('strategy.filtered'), t('strategy.random'), t('sim.expected')], rows),
     fixed ? el('p', {}, t('sim.fixedPrizes', { a: money(r.strategy.prize, game.price.currency), b: money(r.random.prize, game.price.currency), spent: money(total * game.price.amount, game.price.currency) })) : null,
     el('p', {}, t('sim.survived', { n: num(r.survived), total: num(r.draws), share: pct(r.draws ? r.survived / r.draws : 0) })),
     el('p', { class: Math.abs(diff) > 2 * sd ? 'warn' : 'muted' }, t('sim.zDiff', { diff: num(diff), z: num(diff / sd, 2) })));
