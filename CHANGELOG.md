@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-30
+
 ### Changed
 - Filters are computed as soon as the tab opens and after every change (no "Recalculate" button). The
   "real draws" column and the efficiency figures are gone; one plain note explains that filters reject
@@ -112,7 +114,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/Banzamel/WinRate/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/Banzamel/WinRate/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/Banzamel/WinRate/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/Banzamel/WinRate/compare/v0.2.1...v0.2.2
