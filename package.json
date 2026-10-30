@@ -1,0 +1,74 @@
+{
+  "name": "primewinrate",
+  "productName": "PrimeWinRate",
+  "version": "0.1.0",
+  "description": "Windows desktop lottery lab for Lotto and Eurojackpot: full draw history, exact odds, statistics with significance tests, combination filters measured exactly, ticket generator and walk-forward simulations.",
+  "main": "src/main/main.js",
+  "author": "Rafał Polak (Banzamel)",
+  "license": "MIT",
+  "homepage": "https://github.com/Banzamel/PrimeWinRate#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Banzamel/PrimeWinRate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Banzamel/PrimeWinRate/issues"
+  },
+  "keywords": [
+    "lottery",
+    "lotto",
+    "eurojackpot",
+    "statistics",
+    "probability",
+    "combinatorics",
+    "simulation",
+    "electron"
+  ],
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "fetch-history": "node scripts/fetch-history.js",
+    "version:check": "node scripts/version.js check",
+    "version": "node scripts/version.js stamp && git add CHANGELOG.md",
+    "release:patch": "npm version patch -m \"Release v%s\"",
+    "release:minor": "npm version minor -m \"Release v%s\"",
+    "release:major": "npm version major -m \"Release v%s\"",
+    "dist": "npm run fetch-history && electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "pl.banzamel.primewinrate",
+    "productName": "PrimeWinRate",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/history",
+        "to": "history"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "PrimeWinRate"
+    },
+    "artifactName": "PrimeWinRate-Setup-${version}.${ext}"
+  }
+}

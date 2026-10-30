@@ -1,0 +1,9 @@
+node_modules/
+dist/
+resources/history/
+.idea/
+.vscode/
+*.log
+release-notes.md
+.DS_Store
+Thumbs.db
