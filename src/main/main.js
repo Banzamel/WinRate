@@ -145,7 +145,7 @@ function registerIpc() {
     if (error) return { error };
     return stores[id].merge([draw], { replace: true });
   });
-  ipcMain.handle('history:remove', (_e, id, date) => stores[id].remove(date));
+  ipcMain.handle('history:remove', (_e, id, date, pools) => stores[id].remove(date, pools));
   ipcMain.handle('history:download', async (_e, id) => {
     try {
       const { url, draws, skipped } = await download(getGame(id), (u, o) => net.fetch(u, o));

@@ -24,6 +24,20 @@ test('rejects numbers outside the rules of the date', () => {
   assert.strictEqual(parseText(GAMES.lotto, 'header\n1. 27.01.1957 8,12,31,39,43,45\n').skipped, 1);
 });
 
+test('store keeps several draws of one date (Lotto drew twice a day in 1965–1991)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwr-'));
+  const store = new HistoryStore(GAMES.lotto, dir);
+  const a = { date: '1980-01-06', pools: [[1, 2, 3, 4, 5, 6]] };
+  const b = { date: '1980-01-06', pools: [[7, 8, 9, 10, 11, 12]] };
+  // An older store kept only the first draw of the day; the full source adds the second one.
+  store.merge([a]);
+  assert.deepStrictEqual(store.merge([a, b], { replace: true }), { added: 1, changed: 0, total: 2 });
+  assert.deepStrictEqual(store.merge([a, b], { replace: true }), { added: 0, changed: 0, total: 2 });
+  assert.deepStrictEqual(new HistoryStore(GAMES.lotto, dir).list(), [a, b]);
+  assert.ok(store.remove(b.date, b.pools));
+  assert.deepStrictEqual(store.list(), [a]);
+});
+
 test('store merges by date and persists', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwr-'));
   const store = new HistoryStore(GAMES.lotto, dir);

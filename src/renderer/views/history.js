@@ -41,7 +41,7 @@ export function renderHistory(body, id) {
       el('span', { class: 'muted' }, date(d.date)), balls(d.pools),
       el('button', { class: 'icon-btn', title: t('history.remove'), onClick: async () => {
         if (!confirm(t('history.removeConfirm', { date: date(d.date) }))) return;
-        await window.api.removeDraw(id, d.date);
+        await window.api.removeDraw(id, d.date, d.pools);
         refresh({ total: draws.length - 1 }, 'history.removed');
       } }, '✕'))));
     if (shown < draws.length) list.append(el('button', { class: 'btn ghost', onClick: () => { shown += PAGE * 5; fill(); } }, t('history.more', { n: num(draws.length - shown) })));

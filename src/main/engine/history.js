@@ -59,7 +59,8 @@ function parseText(game, text) {
 
 const sortDraws = (draws) => draws.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
-// One JSON file per game. Draws are unique per date (both games draw at most once a day).
+// One JSON file per game. A date can hold several draws (Lotto drew twice a day on many days of
+// 1965–1991): draws of one date are told apart by their order, as in the source.
 class HistoryStore {
   constructor(game, dir) {
     this.game = game;
@@ -73,23 +74,32 @@ class HistoryStore {
     fs.writeFileSync(this.file, JSON.stringify({ game: this.game.id, updated: new Date().toISOString(), draws: this.draws }));
   }
 
-  // Adds new draws; a draw for a date already stored replaces it only when `replace` is set.
+  // Adds new draws. The n-th draw of a date is matched with the n-th stored draw of that date; a
+  // stored one is replaced only when `replace` is set.
   merge(draws, { replace = false } = {}) {
-    const byDate = new Map(this.draws.map((d) => [d.date, d]));
+    const byDate = new Map();
+    for (const d of this.draws) { if (!byDate.has(d.date)) byDate.set(d.date, []); byDate.get(d.date).push(d); }
+    const seen = new Map();
     let added = 0; let changed = 0;
     for (const d of draws) {
       if (validateDraw(this.game, d)) continue;
-      const old = byDate.get(d.date);
-      if (!old) { byDate.set(d.date, d); added++; } else if (replace && JSON.stringify(old.pools) !== JSON.stringify(d.pools)) { byDate.set(d.date, d); changed++; }
+      const n = seen.get(d.date) || 0;
+      seen.set(d.date, n + 1);
+      if (!byDate.has(d.date)) byDate.set(d.date, []);
+      const day = byDate.get(d.date);
+      if (n >= day.length) { day.push(d); added++; } else if (replace && JSON.stringify(day[n].pools) !== JSON.stringify(d.pools)) { day[n] = d; changed++; }
     }
-    this.draws = sortDraws([...byDate.values()]);
+    this.draws = sortDraws([...byDate.values()].flat());
     if (added || changed) this.save();
     return { added, changed, total: this.draws.length };
   }
 
-  remove(date) {
+  // Removes the draw of a date with these numbers (all draws of the date when pools are not given).
+  remove(date, pools) {
     const before = this.draws.length;
-    this.draws = this.draws.filter((d) => d.date !== date);
+    const key = pools && JSON.stringify(pools);
+    const i = key ? this.draws.findIndex((d) => d.date === date && JSON.stringify(d.pools) === key) : -1;
+    this.draws = key ? this.draws.filter((_, j) => j !== i) : this.draws.filter((d) => d.date !== date);
     if (this.draws.length !== before) this.save();
     return this.draws.length !== before;
   }

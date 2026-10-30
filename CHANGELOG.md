@@ -7,6 +7,11 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- Lotto history keeps both draws of a day: in 1965–1991 Lotto often drew twice on one date, and only the
+  first draw was kept (6 468 instead of 7 424 draws). The missing 956 draws are added at the next download.
+- Removing a draw in History removes only that draw, not every draw of its date.
+
 ## [0.2.7] - 2026-10-30
 
 ### Fixed
