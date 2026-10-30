@@ -43,7 +43,7 @@ function check(tagArg) {
 function notes(out) {
   const log = fs.readFileSync(changelogPath, 'utf8');
   const m = log.match(new RegExp(`## \\[${pkg.version.replace(/\./g, '\\.')}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n## \\[|\\n\\[[^\\]]+\\]: |$)`));
-  const body = `${m ? `${m[1].trim()}\n\n` : ''}**Download:** \`PrimeWinRate-Setup-${pkg.version}.exe\` below.\n`;
+  const body = `${m ? `${m[1].trim()}\n\n` : ''}**Download:** \`WinRate-Setup-${pkg.version}.exe\` below.\n`;
   fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
   fs.writeFileSync(out, body);
   console.log(`release notes for ${pkg.version} -> ${out}`);

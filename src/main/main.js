@@ -1,4 +1,4 @@
-// PrimeWinRate — Electron main process: window, app:// protocol, draw history and IPC.
+// WinRate — Electron main process: window, app:// protocol, draw history and IPC.
 const { app, BrowserWindow, ipcMain, protocol, net, shell, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -12,8 +12,8 @@ const { STRATEGIES } = require('./engine/simulate');
 const { setupAppUpdater } = require('./app-updater');
 
 // All data stays in one folder: <install folder>/data in the installed app (the uninstaller removes
-// it), PRIMEWINRATE_USERDATA=<dir> in development. Chromium caches and logs go there too.
-const DATA_DIR = process.env.PRIMEWINRATE_USERDATA || (app.isPackaged ? path.join(path.dirname(process.execPath), 'data') : null);
+// it), WINRATE_USERDATA=<dir> in development. Chromium caches and logs go there too.
+const DATA_DIR = process.env.WINRATE_USERDATA || (app.isPackaged ? path.join(path.dirname(process.execPath), 'data') : null);
 if (DATA_DIR) for (const key of ['userData', 'sessionData', 'logs', 'crashDumps']) app.setPath(key, key === 'userData' || key === 'sessionData' ? DATA_DIR : path.join(DATA_DIR, key));
 
 // The install folder has to be writable (data never goes anywhere else).
@@ -175,7 +175,7 @@ function serveFile(root, rel) {
 
 app.whenReady().then(() => {
   if (!dataDirWritable()) {
-    dialog.showErrorBox('PrimeWinRate', `The app keeps its data in its own folder, but it cannot write to:\n${DATA_DIR}\n\nReinstall it into a folder you can write to (the default one is), or run it as administrator.\n\nAplikacja przechowuje dane we własnym folderze, ale nie może zapisywać w:\n${DATA_DIR}\n\nZainstaluj ją ponownie w folderze z prawem zapisu (domyślny je ma) lub uruchom jako administrator.`);
+    dialog.showErrorBox('WinRate', `The app keeps its data in its own folder, but it cannot write to:\n${DATA_DIR}\n\nReinstall it into a folder you can write to (the default one is), or run it as administrator.\n\nAplikacja przechowuje dane we własnym folderze, ale nie może zapisywać w:\n${DATA_DIR}\n\nZainstaluj ją ponownie w folderze z prawem zapisu (domyślny je ma) lub uruchom jako administrator.`);
     app.quit();
     return;
   }

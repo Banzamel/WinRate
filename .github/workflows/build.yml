@@ -45,7 +45,7 @@ jobs:
         with:
           tag_name: ${{ inputs.tag }}
           files: |
-            dist/PrimeWinRate-Setup-*.exe
-            dist/PrimeWinRate-Setup-*.exe.blockmap
+            dist/WinRate-Setup-*.exe
+            dist/WinRate-Setup-*.exe.blockmap
             dist/latest.yml
           body_path: ${{ inputs.notes && 'release-notes.md' || '' }}

@@ -1,4 +1,4 @@
-; PrimeWinRate installer additions.
+; WinRate installer additions.
 ; The app keeps all its data in "$INSTDIR\data". An update (the uninstaller runs with --updated)
 ; must keep that folder; a real uninstall removes everything the app ever wrote.
 
@@ -22,8 +22,8 @@
 !macro customUnInstall
   ${ifNot} ${isUpdated}
     ; Downloaded updates (electron-updater cache) and any leftovers of older versions.
-    RMDir /r "$LOCALAPPDATA\primewinrate-updater"
-    RMDir /r "$APPDATA\PrimeWinRate"
-    RMDir /r "$APPDATA\primewinrate"
+    RMDir /r "$LOCALAPPDATA\winrate-updater"
+    RMDir /r "$APPDATA\WinRate"
+    RMDir /r "$APPDATA\winrate"
   ${endif}
 !macroend

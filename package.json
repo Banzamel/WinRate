@@ -1,6 +1,6 @@
 {
-  "name": "primewinrate",
-  "productName": "PrimeWinRate",
+  "name": "winrate",
+  "productName": "WinRate",
   "version": "0.1.0",
   "description": "Windows desktop lottery lab for Lotto and Eurojackpot: full draw history, exact odds, statistics with significance tests, combination filters measured exactly, ticket generator and walk-forward simulations.",
   "main": "src/main/main.js",
@@ -41,8 +41,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "pl.banzamel.primewinrate",
-    "productName": "PrimeWinRate",
+    "appId": "pl.banzamel.winrate",
+    "productName": "WinRate",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -67,11 +67,11 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "PrimeWinRate",
+      "shortcutName": "WinRate",
       "include": "build/installer.nsh",
       "deleteAppDataOnUninstall": true
     },
-    "artifactName": "PrimeWinRate-Setup-${version}.${ext}",
+    "artifactName": "WinRate-Setup-${version}.${ext}",
     "publish": [
       {
         "provider": "github",

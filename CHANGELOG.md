@@ -23,6 +23,7 @@ moves them into a numbered section automatically (see README → Releasing).
   removes everything, updates keep it.
 - Shorter README.
 - New app icon: a lottery draw machine.
+- The app is now called **WinRate** (installer `WinRate-Setup-<version>.exe`).
 
 ### Fixed
 - The pair test no longer reports a fair history as unusual.
