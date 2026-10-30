@@ -116,12 +116,12 @@ const TASKS = {
   // without filters and marked with the filters that removed it (excludedBy).
   untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife, cacheDir, system }, progress) {
     const g = getGame(game);
-    const fixed = system || strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
+    const fixed = strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
     const play = (index, i, strat) => {
       const onProgress = (p, attempts) => progress((i + p) / targets.length, { target: i, attempts });
       return system
-        ? sim.untilHitSystem(g, draws, { index, m: system, strategy: strat, config, recent, halfLife, maxAttempts: Math.min(maxAttempts, 5e7), onProgress })
-        : sim.untilHit(g, draws, { index, strategy: strat, config, maxAttempts, recent, halfLife, fixed: strat === 'random' ? null : fixed, onProgress });
+        ? sim.untilHitSystem(g, draws, { index, m: system, strategy: strat, config, fixed: strat === 'random' ? null : fixed, maxAttempts: Math.min(maxAttempts, 5e7), onProgress })
+        : sim.untilHit(g, draws, { index, strategy: strat, config, maxAttempts, fixed: strat === 'random' ? null : fixed, onProgress });
     };
     const results = targets.map((index, i) => {
       let r = play(index, i, strategy);

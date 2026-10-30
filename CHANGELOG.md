@@ -7,6 +7,12 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- "Until it hits" plays like a careful player: the numbers are drawn one by one (6–12 for Lotto systems), a
+  ticket that breaks the filters is not played, and every played ticket is remembered so none is ever played
+  twice. A system plays only its bets that pass the filters and were not played before. "Expected" is now
+  half of the allowed tickets (no repeats), and each result shows how many drawn tickets were not played.
+
 ## [0.2.9] - 2026-10-30
 
 ### Fixed

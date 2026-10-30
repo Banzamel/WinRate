@@ -75,7 +75,8 @@ function untilHitResult(r, game) {
   const rows = r.results.map((x) => {
     const status = el('span', {},
       x.hit ? el('span', { class: 'good' }, t('sim.hit')) : el('span', { class: 'warn' }, x.stopped ? t('sim.stopped') : t('sim.notYet')),
-      x.excludedBy ? el('div', { class: 'muted small' }, t('sim.unfiltered', { filters: x.excludedBy.map((f) => t(`filter.${f}`)).join(', ') })) : null);
+      x.excludedBy ? el('div', { class: 'muted small' }, t('sim.unfiltered', { filters: x.excludedBy.map((f) => t(`filter.${f}`)).join(', ') })) : null,
+      el('div', { class: 'muted small' }, t('sim.notPlayed', { n: num((x.rejected || 0) + (x.repeats || 0) + (x.skipped || 0)) })));
     const bets = x.system ? x.bets : x.attempts; // a system attempt plays several bets
     return [date(x.date), balls(x.numbers, { small: true }), status, num(x.attempts), num((x.system ? x.expectedAttempts : x.expectedUniform) || 0),
       num(bets), bets ? money(bets * game.price.amount, game.price.currency) : '–', x.attempts ? num(x.attempts / game.drawsPerYear, 0) : '–'];

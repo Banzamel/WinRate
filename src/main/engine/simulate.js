@@ -3,7 +3,7 @@
 //   backtest()  — walk-forward test: for each past draw only the earlier draws are known, the
 //                 strategy plays K tickets and they are scored against the real result, next to a
 //                 plain random player with the same number of tickets;
-//   untilHit()  — keeps generating tickets for a past draw (whose result it knows) until one
+//   untilHit()  — keeps drawing tickets (never the same one twice) for a past draw (whose result it knows) until one
 //                 matches it, and counts the attempts — the honest price of "drawing until it hits".
 const { binom, rank, unrank } = require('./combinatorics');
 const { currentEra, tierFor } = require('./games');
@@ -224,8 +224,39 @@ function backtest(game, draws, { strategy = 'filtered', config, tickets = 10, te
   return result;
 }
 
-// Draws tickets for the past draw `index` (into the current-era list) until one matches it fully.
-function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttempts = 2e8, seed, recent = 50, halfLife = 0, fixed, onProgress, shouldStop } = {}) {
+// Draws `pick` different numbers of 1..n one at a time (each from the numbers still left, like a
+// draw machine), sorted into `out`. `bag` is a permutation of 1..n kept between calls.
+function drawNumbers(rng, bag, pick, out) {
+  const n = bag.length;
+  for (let i = 0; i < pick; i++) {
+    const j = i + rng.int(n - i);
+    const x = bag[j]; bag[j] = bag[i]; bag[i] = x;
+    out[i] = x;
+  }
+  for (let i = 1; i < pick; i++) { const x = out[i]; let j = i - 1; while (j >= 0 && out[j] > x) { out[j + 1] = out[j]; j--; } out[j + 1] = x; }
+  return out;
+}
+const newBag = (n) => Array.from({ length: n }, (_, i) => i + 1);
+const testBit = (bits, i) => (bits[i >>> 3] >> (i & 7)) & 1;
+const setBit = (bits, i) => { bits[i >>> 3] |= 1 << (i & 7); };
+
+// The filters a past result breaks (with the history known before it), or [] when it passes.
+function failedFilters(game, config, ctx, numbers) {
+  const mask = createChecker(currentEra(game).pools[0], game.slipColumns, config, ctx)(numbers);
+  return FILTERS.filter((f, i) => mask & (1 << i)).map((f) => f.id);
+}
+
+// The dynamic (history) filters of a config as one checker, or null when none is on.
+function dynamicChecker(game, config, ctx) {
+  const { dynamic } = splitConfig(config);
+  const on = Object.values(dynamic).some((v) => v !== null && v !== undefined && v !== false);
+  return on ? createChecker(currentEra(game).pools[0], game.slipColumns, dynamic, ctx) : null;
+}
+
+// "Until it hits" for a past draw `index` (only the draws before it are known): tickets are drawn
+// number by number; one that breaks the filters or was already played is not played. Every played
+// ticket is remembered, so none is played twice, and the search goes on until one is the result.
+function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttempts = 2e8, seed, fixed, onProgress, shouldStop } = {}) {
   const era = eraDraws(game, draws);
   if (index < 0) index += era.length;
   const target = era[index];
@@ -234,39 +265,43 @@ function untilHit(game, draws, { index, strategy = 'filtered', config, maxAttemp
   const main = pools[0];
   const known = era.slice(0, index);
   const ctx = new HistoryContext(main, known.map((d) => d.pools[0]));
-  const fixedSet = strategy !== 'random' ? fixed || fixedCensus(game, config) : null;
-  const targetRanks = target.pools.map((nums) => rank(nums));
+  const useFilters = strategy !== 'random' && config;
   const base = { date: target.date, numbers: target.pools, strategy, combinations: pools.reduce((n, p) => n * binom(p.size, p.pick), 1) };
-  // Would the filters have thrown the winning ticket away? Then no amount of drawing can hit it.
-  if (strategy !== 'random' && config) {
-    const failed = [];
-    if (fixedSet && !isAllowed(fixedSet.allowed, targetRanks[0])) {
-      const { fixed: f } = splitConfig(config);
-      const mask = createChecker(main, game.slipColumns, f, null)(target.pools[0]);
-      FILTERS.forEach((flt, i) => { if (mask & (1 << i)) failed.push(flt.id); });
-    }
-    const mask = createChecker(main, game.slipColumns, splitConfig(config).dynamic, ctx)(target.pools[0]);
-    FILTERS.forEach((flt, i) => { if (mask & (1 << i)) failed.push(flt.id); });
+  if (useFilters) {
+    const failed = failedFilters(game, config, ctx, target.pools[0]);
     if (failed.length) return { ...base, excluded: true, failed, attempts: 0 };
   }
-  const player = createPlayer(game, { strategy, config, fixed: fixedSet, ctx, draws: known, rng: createRng(seed), recent, halfLife });
-  const allowedMain = strategy === 'random' || !fixedSet ? binom(main.size, main.pick) : fixedSet.allowedCount;
-  const expectedUniform = pools.slice(1).reduce((n, p) => n * binom(p.size, p.pick), allowedMain);
+  const fixedSet = useFilters ? fixed || fixedCensus(game, config) : null;
+  const checkDynamic = useFilters ? dynamicChecker(game, config, ctx) : null;
+  // A ticket is one number: main rank, then the rank of every extra pool (Eurojackpot: Euro numbers).
+  const radix = pools.map((p) => binom(p.size, p.pick));
+  const played = new Uint8Array(Math.ceil(base.combinations / 8));
+  const targetKey = target.pools.reduce((key, nums, i) => key * radix[i] + rank(nums), 0);
+  const allowed = (fixedSet ? fixedSet.allowedCount : radix[0]) * radix.slice(1).reduce((a, b) => a * b, 1);
+  const rng = createRng(seed);
+  const bags = pools.map((p) => newBag(p.size));
+  const bufs = pools.map((p) => new Array(p.pick));
   const started = Date.now();
-  let attempts = 0;
-  const near = new Array(pools.length).fill(0); // tickets that got the main pool right
+  let attempts = 0; let rejected = 0; let repeats = 0; let tries = 0;
+  const result = (extra) => ({ ...base, attempts, rejected, repeats, expectedUniform: (allowed + 1) / 2, ms: Date.now() - started, ...extra });
   for (;;) {
-    const ranks = player.nextRanks();
-    if (!ranks) return { ...base, attempts, hit: false, gaveUp: true, expectedUniform, ms: Date.now() - started };
-    attempts++;
-    let all = true;
-    for (let i = 0; i < ranks.length; i++) if (ranks[i] !== targetRanks[i]) { all = false; } else near[i]++;
-    if (all) return { ...base, attempts, hit: true, expectedUniform, mainHits: near[0], ms: Date.now() - started };
-    if (attempts >= maxAttempts) return { ...base, attempts, hit: false, expectedUniform, mainHits: near[0], ms: Date.now() - started };
-    if ((attempts & 0xfffff) === 0) {
-      if (onProgress) onProgress(attempts / maxAttempts, attempts);
-      if (shouldStop && shouldStop()) return { ...base, attempts, hit: false, stopped: true, expectedUniform, mainHits: near[0], ms: Date.now() - started };
+    tries++;
+    if ((tries & 0xfffff) === 0) {
+      if (onProgress) onProgress(Math.min(1, attempts / Math.min(maxAttempts, allowed)), attempts);
+      if (shouldStop && shouldStop()) return result({ hit: false, stopped: true });
     }
+    const nums = drawNumbers(rng, bags[0], main.pick, bufs[0]);
+    const r = rank(nums);
+    if (fixedSet && !isAllowed(fixedSet.allowed, r)) { rejected++; continue; }
+    if (checkDynamic && checkDynamic(nums)) { rejected++; continue; }
+    let key = r;
+    for (let i = 1; i < pools.length; i++) key = key * radix[i] + rank(drawNumbers(rng, bags[i], pools[i].pick, bufs[i]));
+    if (testBit(played, key)) { repeats++; continue; }
+    setBit(played, key);
+    attempts++;
+    if (key === targetKey) return result({ hit: true });
+    if (attempts >= maxAttempts) return result({ hit: false });
+    if (attempts >= allowed) return result({ hit: false, gaveUp: true });
   }
 }
 
@@ -319,10 +354,10 @@ function systemNumbers(game, draws, { m, strategy = 'filtered', config, seed, re
 
 module.exports.systemNumbers = systemNumbers;
 
-// "Until it hits" with system bets: every attempt marks m numbers (uniformly, or weighted like the
-// strategy) and plays the C(m, 6) bets of them that pass the filters. Counts attempts and bets until
-// one bet is the result of the past draw `index` (known draws: only the ones before it).
-function untilHitSystem(game, draws, { index, m, strategy = 'filtered', config, maxAttempts = 2e7, seed, recent = 50, halfLife = 0, onProgress } = {}) {
+// "Until it hits" with system bets of m numbers: the m numbers are drawn one by one; of their
+// C(m, 6) bets only the ones that pass the filters and were not played before are played (and
+// remembered). A system with no such bet is not played. Ends when a played bet is the result.
+function untilHitSystem(game, draws, { index, m, strategy = 'filtered', config, maxAttempts = 2e7, seed, fixed, onProgress } = {}) {
   const era = eraDraws(game, draws);
   if (index < 0) index += era.length;
   const target = era[index];
@@ -331,32 +366,44 @@ function untilHitSystem(game, draws, { index, m, strategy = 'filtered', config, 
   const known = era.slice(0, index);
   const ctx = new HistoryContext(pool, known.map((d) => d.pools[0]));
   const useFilters = strategy !== 'random' && config;
-  const check = useFilters ? createChecker(pool, game.slipColumns, config, ctx) : null;
   const base = { date: target.date, numbers: target.pools, strategy, system: m, combinations: binom(pool.size, pool.pick) };
-  if (check) {
-    const mask = check(target.pools[0]);
-    if (mask) return { ...base, excluded: true, failed: FILTERS.filter((f, i) => mask & (1 << i)).map((f) => f.id), attempts: 0, bets: 0 };
+  if (useFilters) {
+    const failed = failedFilters(game, config, ctx, target.pools[0]);
+    if (failed.length) return { ...base, excluded: true, failed, attempts: 0, bets: 0 };
   }
-  const rng = createRng(seed);
-  const weights = numberWeights(['random', 'filtered', 'unpopular'].includes(strategy) ? 'random' : strategy, pool.size, pool.pick, known.map((d) => d.pools[0]), recent, halfLife);
+  const fixedSet = useFilters ? fixed || fixedCensus(game, config) : null;
+  const checkDynamic = useFilters ? dynamicChecker(game, config, ctx) : null;
   const { forEachCombination } = require('./combinatorics');
-  const inTarget = new Uint8Array(pool.size + 1);
-  for (const x of target.pools[0]) inTarget[x] = 1;
+  const played = new Uint8Array(Math.ceil(base.combinations / 8));
+  const targetRank = rank(target.pools[0]);
+  const allowed = fixedSet ? fixedSet.allowedCount : base.combinations;
+  const rng = createRng(seed);
+  const bag = newBag(pool.size);
   const nums = new Array(m); const sub = new Array(pool.pick);
-  const perSystem = binom(m, pool.pick);
   const started = Date.now();
-  let attempts = 0; let bets = 0;
+  let attempts = 0; let bets = 0; let skipped = 0; let tries = 0;
+  // Expected systems: half of the allowed bets, at the bets per system played so far.
+  const result = (extra) => ({ ...base, attempts, bets, skipped, expectedAttempts: attempts ? ((allowed + 1) / 2) / (bets / attempts) : 0, ms: Date.now() - started, ...extra });
   for (;;) {
-    weightedPick(rng, weights, pool.size, m, null, nums);
-    attempts++;
-    let hits = 0;
-    for (let i = 0; i < m; i++) hits += inTarget[nums[i]];
-    if (check) {
-      forEachCombination(m, pool.pick, (idx) => { for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1]; if (!check(sub)) bets++; });
-    } else bets += perSystem;
-    if (hits === pool.pick) return { ...base, hit: true, attempts, bets, expectedAttempts: base.combinations / perSystem, ms: Date.now() - started };
-    if (attempts >= maxAttempts) return { ...base, hit: false, attempts, bets, expectedAttempts: base.combinations / perSystem, ms: Date.now() - started };
-    if (onProgress && (attempts & 0x3fff) === 0) onProgress(attempts / maxAttempts, attempts);
+    tries++;
+    if (onProgress && (tries & 0x3fff) === 0) onProgress(Math.min(1, attempts / maxAttempts), attempts);
+    drawNumbers(rng, bag, m, nums);
+    let fresh = 0; let hit = false;
+    forEachCombination(m, pool.pick, (idx) => {
+      for (let i = 0; i < pool.pick; i++) sub[i] = nums[idx[i] - 1];
+      const r = rank(sub);
+      if (testBit(played, r)) return;
+      if (fixedSet && !isAllowed(fixedSet.allowed, r)) return;
+      if (checkDynamic && checkDynamic(sub)) return;
+      setBit(played, r);
+      fresh++;
+      if (r === targetRank) hit = true;
+    });
+    if (!fresh) { skipped++; continue; }
+    attempts++; bets += fresh;
+    if (hit) return result({ hit: true });
+    if (attempts >= maxAttempts) return result({ hit: false });
+    if (bets >= allowed) return result({ hit: false, gaveUp: true });
   }
 }
 

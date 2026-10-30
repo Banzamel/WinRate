@@ -4,7 +4,7 @@ const { GAMES } = require('../src/main/engine/games');
 const { binom, forEachCombination } = require('../src/main/engine/combinatorics');
 const { createMeter, defaultFilters, filterValues, resolveFilters, createChecker, census, distributions, HistoryContext, historySurvival } = require('../src/main/engine/filters');
 const { chiSquare, numberStats, pairStats } = require('../src/main/engine/stats');
-const { createRng, generate, backtest, untilHit } = require('../src/main/engine/simulate');
+const { createRng, generate, backtest, untilHit, untilHitSystem } = require('../src/main/engine/simulate');
 
 // A small 6-of-20 game keeps the exhaustive checks fast.
 const SMALL = { size: 20, pick: 6 };
@@ -112,6 +112,25 @@ test('backtest and until-hit', { timeout: 120000 }, () => {
   const excluded = untilHit(game, draws, { index: -1, strategy: 'filtered', config: { ...off, odd: odd === 0 ? [1, 4] : [0, odd - 1] }, seed: 7 });
   assert.ok(excluded.excluded);
   assert.deepStrictEqual(excluded.failed, ['odd']);
+});
+
+test('until it hits never plays a ticket twice', () => {
+  const pool = { size: 10, pick: 3 }; // 120 tickets
+  const game = { ...GAMES.lotto, pools: [pool], eras: [{ from: '2000-01-01', pools: [pool] }], slipColumns: 5 };
+  const draws = fakeHistory(game, 5, 3);
+  let sum = 0;
+  for (let seed = 1; seed <= 400; seed++) {
+    const r = untilHit(game, draws, { index: -1, strategy: 'random', seed });
+    assert.ok(r.hit && r.attempts >= 1 && r.attempts <= 120, `attempts ${r.attempts}`);
+    sum += r.attempts;
+  }
+  // Without repeats the result is found after half of the tickets on average: (120 + 1) / 2.
+  assert.ok(Math.abs(sum / 400 - 60.5) < 6, `mean ${sum / 400}`);
+  // Systems: every played bet is new, so the bets never exceed the 120 tickets.
+  for (let seed = 1; seed <= 50; seed++) {
+    const s = untilHitSystem(game, draws, { index: -1, m: 5, strategy: 'random', seed });
+    assert.ok(s.hit && s.bets <= 120 && s.bets >= s.attempts, `bets ${s.bets}`);
+  }
 });
 
 test('pair test of a fair history is not flagged (small expected counts)', () => {
