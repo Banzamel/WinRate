@@ -73,10 +73,11 @@ function backtestResult(r, game) {
 
 function untilHitResult(r, game) {
   const rows = r.results.map((x) => {
-    const status = x.excluded ? el('span', { class: 'bad' }, t('sim.excluded', { filters: x.failed.map((f) => t(`filter.${f}`)).join(', ') }))
-      : x.hit ? el('span', { class: 'good' }, t('sim.hit')) : el('span', { class: 'warn' }, x.stopped ? t('sim.stopped') : t('sim.notYet'));
+    const status = el('span', {},
+      x.hit ? el('span', { class: 'good' }, t('sim.hit')) : el('span', { class: 'warn' }, x.stopped ? t('sim.stopped') : t('sim.notYet')),
+      x.excludedBy ? el('div', { class: 'muted small' }, t('sim.unfiltered', { filters: x.excludedBy.map((f) => t(`filter.${f}`)).join(', ') })) : null);
     const bets = x.system ? x.bets : x.attempts; // a system attempt plays several bets
-    return [date(x.date), balls(x.numbers, { small: true }), status, num(x.attempts), num(x.system ? x.expectedAttempts : x.expectedUniform || 0),
+    return [date(x.date), balls(x.numbers, { small: true }), status, num(x.attempts), num((x.system ? x.expectedAttempts : x.expectedUniform) || 0),
       num(bets), bets ? money(bets * game.price.amount, game.price.currency) : '–', x.attempts ? num(x.attempts / game.drawsPerYear, 0) : '–'];
   });
   const hits = r.results.filter((x) => x.hit);

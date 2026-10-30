@@ -44,10 +44,10 @@ test('expected distributions add up to all combinations', () => {
   for (const m of Object.values(d.metrics)) assert.strictEqual(m.counts.reduce((s, c) => s + c, 0), d.total);
 });
 
-test('the default filters remove about a quarter of Lotto', { timeout: 60000 }, () => {
+test('the default filters remove about a fifth of Lotto', { timeout: 60000 }, () => {
   const res = census(GAMES.lotto.pools[0], GAMES.lotto.slipColumns, defaultFilters(GAMES.lotto.pools[0]), null);
   const removed = 1 - res.allowedCount / res.total;
-  assert.ok(removed > 0.22 && removed < 0.30, `removed ${removed}`);
+  assert.ok(removed > 0.17 && removed < 0.23, `removed ${removed}`);
 });
 
 test('history filter removes past draws and near misses', () => {

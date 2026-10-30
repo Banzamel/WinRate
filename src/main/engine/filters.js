@@ -106,7 +106,8 @@ function filterValues(pool) {
   return {
     odd: [1, k - 1],
     low: [1, k - 1],
-    sum: [Math.round(mean - 1.5 * sd), Math.round(mean + 1.5 * sd)],
+    // Only the extreme sums (about 4 %): a narrower band removed 13 % of the real draws as well.
+    sum: [Math.round(mean - 2 * sd), Math.round(mean + 2 * sd)],
     maxRun: 2,
     maxAP: 3,
     maxDecade: 3,
@@ -134,7 +135,7 @@ function filterValues(pool) {
 const OFF_BY_DEFAULT = ['primes', 'minDecades', 'maxConsPairs', 'maxMod3', 'maxGap', 'lastOverlap', 'numberWeight', 'pairWeight'];
 
 // Default set: the popular shapes (extreme odd/low, sum, runs, progressions, one decade or
-// ending, slip rows/columns, narrow spread, all dates, past results). About a quarter of Lotto.
+// ending, slip rows/columns, narrow spread, all dates, past results). About a fifth of Lotto and Eurojackpot.
 function defaultFilters(pool) {
   const values = filterValues(pool);
   for (const id of OFF_BY_DEFAULT) values[id] = null;

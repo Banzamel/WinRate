@@ -112,25 +112,22 @@ const TASKS = {
   },
 
   // One or more past draws, each played "until it hits".
+  // A result the filters would have thrown away cannot be hit with them: that draw is replayed
+  // without filters and marked with the filters that removed it (excludedBy).
   untilHit({ game, draws, strategy, config, targets, maxAttempts, recent, halfLife, cacheDir, system }, progress) {
     const g = getGame(game);
-    if (system) {
-      const results = targets.map((index, i) => {
-        const r = sim.untilHitSystem(g, draws, { index, m: system, strategy, config, recent, halfLife, maxAttempts: Math.min(maxAttempts, 5e7),
-          onProgress: (p, attempts) => progress((i + p) / targets.length, { target: i, attempts }) });
-        progress((i + 1) / targets.length, { target: i, done: r });
-        return r;
-      });
-      return { results };
-    }
-    const fixed = strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
-    const results = [];
-    targets.forEach((index, i) => {
-      results.push(sim.untilHit(g, draws, {
-        index, strategy, config, maxAttempts, recent, halfLife, fixed,
-        onProgress: (p, attempts) => progress((i + p) / targets.length, { target: i, attempts }),
-      }));
-      progress((i + 1) / targets.length, { target: i, done: results[i] });
+    const fixed = system || strategy === 'random' ? null : fixedFor(g, config, null, cacheDir);
+    const play = (index, i, strat) => {
+      const onProgress = (p, attempts) => progress((i + p) / targets.length, { target: i, attempts });
+      return system
+        ? sim.untilHitSystem(g, draws, { index, m: system, strategy: strat, config, recent, halfLife, maxAttempts: Math.min(maxAttempts, 5e7), onProgress })
+        : sim.untilHit(g, draws, { index, strategy: strat, config, maxAttempts, recent, halfLife, fixed: strat === 'random' ? null : fixed, onProgress });
+    };
+    const results = targets.map((index, i) => {
+      let r = play(index, i, strategy);
+      if (r.excluded) r = { ...play(index, i, 'random'), excludedBy: r.failed };
+      progress((i + 1) / targets.length, { target: i, done: r });
+      return r;
     });
     return { results };
   },

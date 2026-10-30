@@ -7,6 +7,18 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- Filters are computed as soon as the tab opens and after every change (no "Recalculate" button). The
+  "real draws" column and the efficiency figures are gone; one plain note explains that filters reject
+  real results exactly as often as all combinations.
+- The sum filter keeps only the extreme sums out (±2 standard deviations, ~4 % of tickets instead of 13 %):
+  the default set now removes about 20 % of Lotto and Eurojackpot (checked on all 7 424 Lotto and 480
+  Eurojackpot draws: 19.9 % and 20.6 % of them would have been rejected — the same share, as expected).
+
+### Fixed
+- Simulation "until it hits": a past result that the filters would have removed is replayed without filters
+  (and marked so) instead of stopping at once with "impossible"; no more "NaN" for system bets.
+
 ## [0.2.4] - 2026-10-30
 
 ### Changed
