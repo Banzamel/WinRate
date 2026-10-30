@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { GAMES } = require('../src/main/engine/games');
 const { binom, forEachCombination } = require('../src/main/engine/combinatorics');
-const { createMeter, defaultFilters, createChecker, census, distributions, HistoryContext, historySurvival } = require('../src/main/engine/filters');
+const { createMeter, defaultFilters, filterValues, resolveFilters, createChecker, census, distributions, HistoryContext, historySurvival } = require('../src/main/engine/filters');
 const { chiSquare, numberStats, pairStats } = require('../src/main/engine/stats');
 const { createRng, generate, backtest, untilHit } = require('../src/main/engine/simulate');
 
@@ -44,10 +44,10 @@ test('expected distributions add up to all combinations', () => {
   for (const m of Object.values(d.metrics)) assert.strictEqual(m.counts.reduce((s, c) => s + c, 0), d.total);
 });
 
-test('the default filters remove about half of Lotto', { timeout: 60000 }, () => {
+test('the default filters remove about a quarter of Lotto', { timeout: 60000 }, () => {
   const res = census(GAMES.lotto.pools[0], GAMES.lotto.slipColumns, defaultFilters(GAMES.lotto.pools[0]), null);
   const removed = 1 - res.allowedCount / res.total;
-  assert.ok(removed > 0.42 && removed < 0.52, `removed ${removed}`);
+  assert.ok(removed > 0.22 && removed < 0.30, `removed ${removed}`);
 });
 
 test('history filter removes past draws and near misses', () => {
@@ -117,4 +117,18 @@ test('backtest and until-hit', { timeout: 120000 }, () => {
 test('pair test of a fair history is not flagged (small expected counts)', () => {
   const draws = fakeHistory(GAMES.eurojackpot, 480, 2).map((d) => d.pools[0]);
   assert.ok(pairStats(50, 5, draws).fit.p > 0.001);
+});
+
+test('filters are only switched on and off; their values are fixed', () => {
+  const pool = GAMES.lotto.pools[0];
+  const values = filterValues(pool);
+  assert.deepStrictEqual(resolveFilters(pool, null), defaultFilters(pool));
+  assert.strictEqual(defaultFilters(pool).maxConsPairs, null);
+  // An edited value from an older save means "on" and is replaced by the fixed value.
+  const r = resolveFilters(pool, { odd: [0, 6], maxRun: true, birthdays: false, maxConsPairs: 3 });
+  assert.deepStrictEqual(r.odd, values.odd);
+  assert.strictEqual(r.maxRun, values.maxRun);
+  assert.strictEqual(r.maxConsPairs, values.maxConsPairs);
+  assert.strictEqual(r.birthdays, null);
+  assert.strictEqual(r.sum, null);
 });

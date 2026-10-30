@@ -25,7 +25,7 @@ Each game has its own tab:
   draw shapes vs. all combinations, ball/machine bias detection — each with a significance test
 - **Filters** — throw away unlikely and over-played shapes (all-even, 1-2-3-4-5-6, progressions, birthdays…);
   shows exactly what share of combinations is removed and how many real draws would have survived
-- **Generator** — tickets from 9 strategies, popularity of each ticket, abbreviated wheels (systems)
+- **Generator** — tickets that pass all active filters, popularity of each ticket, abbreviated wheels (systems)
 - **Simulation** — replay the past as if the future were unknown, or draw "until it hits" a past result
 
 ## Notes

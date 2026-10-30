@@ -7,6 +7,16 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- Simpler Generator: no strategy to choose — every ticket passes all active filters (also "Choose numbers
+  for me" of the system bets).
+- Simpler Filters: each filter is only switched on or off, its value is fixed and shown next to it; the presets
+  are replaced by "Restore defaults". Settings saved by older versions keep which filters were on.
+- New default set (about a quarter of Lotto, ~25 % of Eurojackpot): the popular shapes stay on; primes, decades
+  used, neighbour pairs, remainder of 3, largest gap and the history weights are off by default. On the full
+  history every filter removes real draws as often as random tickets, so these only cut tickets without
+  making a win less shared (neighbour pairs even remove the unpopular ones).
+
 ## [0.2.1] - 2026-10-30
 
 ### Fixed

@@ -98,9 +98,8 @@ const FILTERS = [
   { id: 'pairWeight', kind: 'pairs' }, // average pair co-occurrence z-score below N
 ];
 
-// Suggested starting point: removes the shapes that rarely come out *and* that crowds of
-// players pick (so a win is less often shared). Removes about 47 % of Lotto tickets.
-function defaultFilters(pool) {
+// The fixed value of every filter: the user only switches filters on and off.
+function filterValues(pool) {
   const { size: n, pick: k } = pool;
   const mean = (k * (n + 1)) / 2;
   const sd = Math.sqrt((k * (n - k) * (n + 1)) / 12);
@@ -122,11 +121,35 @@ function defaultFilters(pool) {
     maxGap: Math.floor(n / 2),
     birthdays: true,
     history: k,
-    lastOverlap: null,
-    numberWeight: null,
-    pairWeight: null,
+    lastOverlap: 2,
+    numberWeight: -0.5,
+    pairWeight: -0.5,
   };
 }
+
+// Off by default. On the full history every filter removes real draws as often as it removes
+// combinations (a fair machine), so a filter is only worth it when it drops tickets crowds play.
+// These remove many tickets without that reason (players avoid neighbours, so maxConsPairs even
+// removes unpopular tickets) or follow the history, which carries no information on a fair machine.
+const OFF_BY_DEFAULT = ['primes', 'minDecades', 'maxConsPairs', 'maxMod3', 'maxGap', 'lastOverlap', 'numberWeight', 'pairWeight'];
+
+// Default set: the popular shapes (extreme odd/low, sum, runs, progressions, one decade or
+// ending, slip rows/columns, narrow spread, all dates, past results). About a quarter of Lotto.
+function defaultFilters(pool) {
+  const values = filterValues(pool);
+  for (const id of OFF_BY_DEFAULT) values[id] = null;
+  return values;
+}
+
+// Saved settings only say which filters are on (old saves still hold values: any value = on);
+// the values are always the fixed ones. No saved settings = the default set.
+function resolveFilters(pool, saved) {
+  if (!saved) return defaultFilters(pool);
+  const values = filterValues(pool);
+  return Object.fromEntries(FILTERS.map((f) => [f.id, isOn(saved[f.id]) ? values[f.id] : null]));
+}
+
+const isOn = (v) => v !== null && v !== undefined && v !== false;
 
 // History context for the history and weight filters: what was known after `draws`
 // (main-pool numbers, oldest first). Draws can be added one by one (walk-forward simulation).
@@ -327,4 +350,4 @@ function historySurvival(pool, cols, config, draws) {
   return { draws: draws.length, survived, removed: FILTERS.map((f, i) => ({ id: f.id, count: removed[i], share: draws.length ? removed[i] / draws.length : 0 })) };
 }
 
-module.exports = { PRIMES, METRICS, FILTERS, createMeter, defaultFilters, HistoryContext, splitConfig, createChecker, census, distributions, historySurvival, isAllowed };
+module.exports = { PRIMES, METRICS, FILTERS, createMeter, filterValues, defaultFilters, resolveFilters, HistoryContext, splitConfig, createChecker, census, distributions, historySurvival, isAllowed };

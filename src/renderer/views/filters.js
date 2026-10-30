@@ -1,30 +1,19 @@
 // Filters: which combinations are thrown away, the exact share each removes, and how many of
-// the real draws would have survived them (the honest test of a filter).
+// the real draws would have survived them (the honest test of a filter). Filters can only be
+// switched on and off; their values are fixed (game.filterValues).
 import { t, num, pct } from '../js/i18n.js';
 import { state, filtersOf, saveGameSettings } from '../js/store.js';
-import { el, card, hint, table, numberInput, spinner, toast, mount } from '../js/ui.js';
+import { el, card, hint, table, spinner, toast, mount } from '../js/ui.js';
 import { runJob } from './game.js';
-
-// Presets: none, light (~32 % of Lotto), the default (~47 %) and a strict one.
-function presets(game) {
-  const def = game.defaultFilters;
-  const none = Object.fromEntries(Object.keys(def).map((k) => [k, null]));
-  const k = game.pools[0].pick;
-  return {
-    none,
-    light: { ...def, primes: null, minDecades: null, maxConsPairs: null, maxMod3: null, maxGap: null },
-    default: def,
-    strict: { ...def, odd: [2, k - 2], low: [2, k - 2], maxRun: 1, maxDecade: 2, history: k - 1, lastOverlap: 1, numberWeight: -0.5 },
-  };
-}
 
 export function renderFilters(body, id) {
   const game = state.games[id];
-  const config = { ...filtersOf(id) };
+  // On/off of every filter (older saves hold values: any value = on).
+  const config = Object.fromEntries(state.filters.map((f) => [f.id, isOn(filtersOf(id)[f.id])]));
   const result = state.filterResult[id];
   const save = async (patch) => {
     Object.assign(config, patch);
-    await saveGameSettings(id, { filters: { ...config } });
+    await saveGameSettings(id, { filters: patch ? { ...config } : null });
     delete state.filterResult[id];
     body.replaceChildren(); renderFilters(body, id);
   };
@@ -41,7 +30,7 @@ export function renderFilters(body, id) {
     card(t('filters.title'),
       hint(t('filters.intro')),
       el('div', { class: 'btn-row' },
-        Object.entries(presets(game)).map(([name, preset]) => el('button', { class: 'btn', onClick: () => save({ ...preset }) }, t(`filters.preset.${name}`))),
+        el('button', { class: 'btn', onClick: () => save(null) }, t('filters.reset')),
         calc),
       el('table', { class: 'table filters' },
         el('thead', {}, el('tr', {}, [t('filters.filter'), t('filters.setting'), t('filters.removes'), t('filters.realDraws')].map((h) => el('th', {}, h)))),
@@ -57,28 +46,22 @@ export function renderFilters(body, id) {
 const isOn = (v) => v !== null && v !== undefined && v !== false;
 
 function filterRow(f, config, game, save) {
-  const v = config[f.id];
-  const def = game.defaultFilters[f.id];
-  const k = game.pools[0].pick;
-  const toggle = el('input', { type: 'checkbox', checked: isOn(v) || null, onChange: (e) => save({ [f.id]: e.target.checked ? (def ?? fallback(f, k)) : null }) });
-  let inputs = null;
-  if (isOn(v)) {
-    if (f.kind === 'range') {
-      inputs = el('span', { class: 'range' }, numberInput(v[0], { onChange: (x) => save({ [f.id]: [x ?? 0, v[1]] }) }), '–', numberInput(v[1], { onChange: (x) => save({ [f.id]: [v[0], x ?? 0] }) }));
-    } else if (f.kind === 'flag') {
-      inputs = el('span', { class: 'muted' }, t('filters.on'));
-    } else if (f.kind === 'history') {
-      inputs = el('select', { onChange: (e) => save({ history: Number(e.target.value) }) },
-        [k, k - 1].map((n) => el('option', { value: n, selected: n === v || null }, t('filters.historyN', { n }))));
-    } else {
-      const step = f.kind === 'weight' || f.kind === 'pairs' ? 0.1 : 1;
-      inputs = numberInput(v, { step, onChange: (x) => save({ [f.id]: x }) });
-    }
-  }
-  return { f, control: el('span', { class: 'filter-control' }, toggle, inputs) };
+  const on = config[f.id];
+  const toggle = el('input', { type: 'checkbox', checked: on || null, onChange: (e) => save({ [f.id]: e.target.checked }) });
+  return { f, control: el('span', { class: 'filter-control' }, toggle, el('span', { class: on ? '' : 'muted' }, describe(f, game.filterValues[f.id]))) };
 }
 
-const fallback = (f, k) => ({ history: k, last: 2, weight: -0.5, pairs: -0.5, max: 3, min: 3, range: [1, k - 1], flag: true }[f.kind]);
+// The fixed value of a filter, as text.
+function describe(f, v) {
+  switch (f.kind) {
+    case 'range': return `${v[0]}–${v[1]}`;
+    case 'max': case 'last': return `≤ ${v}`;
+    case 'min': return `≥ ${v}`;
+    case 'history': return t('filters.historyN', { n: v });
+    case 'weight': case 'pairs': return `< ${num(v, 1)}`;
+    default: return t('filters.on');
+  }
+}
 
 function summary(result, game) {
   const kept = result.allowedCount / result.total;

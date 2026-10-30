@@ -7,7 +7,7 @@ const { Settings } = require('./settings');
 const { Jobs } = require('./jobs');
 const { GAMES, getGame, currentEra, tierOdds, combinationCount, anyPrizeProbability, nextDraws, lastDraw, drawsPerYear } = require('./engine/games');
 const { HistoryStore, parseText, download, validateDraw } = require('./engine/history');
-const { defaultFilters, FILTERS } = require('./engine/filters');
+const { defaultFilters, filterValues, resolveFilters, FILTERS } = require('./engine/filters');
 const { STRATEGIES } = require('./engine/simulate');
 const { setupAppUpdater } = require('./app-updater');
 
@@ -64,12 +64,13 @@ function gameInfo(id) {
     eras: game.eras, schedule: game.schedule, price: game.price, slipColumns: game.slipColumns,
     tiers: tierOdds(game), combinations: combinationCount(game), anyPrize: anyPrizeProbability(game),
     nextDraws: nextDraws(game, new Date(), 4).map((d) => d.toISOString()), drawsPerYear: drawsPerYear(game),
-    defaultFilters: defaultFilters(currentEra(game).pools[0]), sources: game.sources,
+    defaultFilters: defaultFilters(currentEra(game).pools[0]), filterValues: filterValues(currentEra(game).pools[0]), sources: game.sources,
     typicalPrizes: game.typicalPrizes, system: game.system || null, typicalJackpot: game.typicalJackpot, typicalSales: game.typicalSales,
   };
 }
 
-const configFor = (id) => settings.game(id).filters || defaultFilters(currentEra(getGame(id)).pools[0]);
+// The filters switched on, always with their fixed values.
+const configFor = (id, saved = settings.game(id).filters) => resolveFilters(currentEra(getGame(id)).pools[0], saved);
 
 // Expected pattern distributions depend on the pool only: computed once, then read from disk.
 const distCache = {};
@@ -173,7 +174,7 @@ function registerIpc() {
     const dist = await distributionsFor(id);
     return jobs.run('stats', 'report', { game: id, draws: draws(id), dist, recent: opts.recent || 50, halfLife: opts.halfLife || 0 });
   });
-  ipcMain.handle('engine:filters', (_e, id, config) => jobs.run('filters', 'filters', { game: id, draws: draws(id), config: config || configFor(id) , cacheDir: combosDir() }));
+  ipcMain.handle('engine:filters', (_e, id, config) => jobs.run('filters', 'filters', { game: id, draws: draws(id), config: configFor(id, config || undefined) , cacheDir: combosDir() }));
   ipcMain.handle('engine:generate', (_e, id, opts) => jobs.run('generate', 'generate', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:backtest', (_e, id, opts) => jobs.run('sim', 'backtest', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));
   ipcMain.handle('engine:untilHit', (_e, id, opts) => jobs.run('sim', 'untilHit', { game: id, draws: draws(id), config: configFor(id), ...opts , cacheDir: combosDir() }));

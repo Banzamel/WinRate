@@ -1,29 +1,30 @@
-// Generator: tickets for the next draw with a strategy and the active filters.
+// Generator: tickets for the next draw; every ticket passes all active filters.
 import { t, num, money, pct } from '../js/i18n.js';
 import { state, gameSettings, saveGameSettings, advanced } from '../js/store.js';
 import { el, card, hint, balls, numberInput, select, spinner, toast, table, mount } from '../js/ui.js';
 import { runJob } from './game.js';
 
+// The only generator mode: uniform among the combinations that pass the active filters.
+const STRATEGY = 'filtered';
+
 export function renderGenerator(body, id) {
   const game = state.games[id];
-  const opts = { strategy: 'filtered', count: 5, recent: 50, halfLife: 0, maxCommon: game.pools[0].pick - 4, ...(gameSettings(id).generator || {}) };
-  const set = async (patch) => { Object.assign(opts, patch); await saveGameSettings(id, { generator: { ...opts } }); };
+  const { count = 5, maxCommon = game.pools[0].pick - 4 } = gameSettings(id).generator || {};
+  const opts = { count, maxCommon, strategy: STRATEGY };
+  const set = async (patch) => { Object.assign(opts, patch); await saveGameSettings(id, { generator: { count: opts.count, maxCommon: opts.maxCommon } }); };
   const out = state.tickets[id];
   const go = el('button', { class: 'btn primary', onClick: () => {
     go.replaceWith(spinner(t('generator.working')));
-    runJob('generate', body, id, async () => { state.tickets[id] = { ...(await window.api.generate(id, opts)), strategy: opts.strategy }; }, renderGenerator)
+    runJob('generate', body, id, async () => { state.tickets[id] = await window.api.generate(id, opts); }, renderGenerator)
       .catch((e) => toast(e.message, 'bad'));
   } }, t('generator.go'));
-  mount(body, 
+  mount(body,
     card(t('generator.title'),
       el('div', { class: 'form-row' },
-        el('label', {}, t('generator.strategy'), select(opts.strategy, state.strategies.map((s) => [s, t(`strategy.${s}`)]), (v) => { set({ strategy: v }); body.replaceChildren(); renderGenerator(body, id); })),
         el('label', {}, t('generator.count'), numberInput(opts.count, { min: 1, max: 200, onChange: (v) => set({ count: Math.max(1, Math.min(200, v || 1)) }) })),
         el('label', { title: t('generator.maxCommonHint') }, t('generator.maxCommon'), numberInput(opts.maxCommon, { min: 0, max: game.pools[0].pick - 1, onChange: (v) => set({ maxCommon: v }) })),
-        ['hot', 'cold'].includes(opts.strategy) ? el('label', {}, t('generator.recent'), numberInput(opts.recent, { min: 5, max: 1000, onChange: (v) => set({ recent: v || 50 }) })) : null,
-        opts.strategy === 'bayes' ? el('label', {}, t('generator.halfLife'), numberInput(opts.halfLife, { min: 0, max: 10000, onChange: (v) => set({ halfLife: v || 0 }) })) : null,
         go),
-      hint(`${t(`strategy.${opts.strategy}.hint`)}${opts.strategy === 'random' ? '' : ` ${t('generator.filtersNote')}`}`)),
+      hint(t('generator.filtersNote'))),
     out ? card(t('generator.tickets', { n: num(out.tickets.length) }),
       el('div', { class: 'tickets' }, out.tickets.map((tk, i) => el('div', { class: 'ticket' }, el('span', { class: 'muted' }, `${i + 1}.`), balls(tk),
         out.popularity ? el('span', { class: `pop ${out.popularity[i] > 3 ? 'bad' : out.popularity[i] < 0.7 ? 'good' : ''}`, title: t('generator.popularityTitle') }, t('generator.popularity', { x: num(out.popularity[i], out.popularity[i] < 10 ? 2 : 0) })) : null))),
@@ -87,8 +88,7 @@ function systemCard(id, game) {
     }, String(n))));
     const run = (auto) => async () => {
       try {
-        const opts = gameSettings(id).generator || {};
-        st.result = await window.api.system(id, { m: st.m, numbers: auto ? null : st.numbers, strategy: opts.strategy || 'filtered', recent: opts.recent, halfLife: opts.halfLife });
+        st.result = await window.api.system(id, { m: st.m, numbers: auto ? null : st.numbers, strategy: STRATEGY });
         st.numbers = st.result.numbers;
       } catch (e) { toast(e.message.replace(/^.*Error: /, ''), 'bad'); }
       draw();
