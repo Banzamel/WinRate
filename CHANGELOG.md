@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-31
+
 ### Fixed
 - No stray "null" under the number pickers of the system bet, the wheel and Your numbers before a result.
 - Coupon ticket counts read correctly in Polish ("zakłady: 1").
@@ -168,7 +170,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Banzamel/WinRate/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Banzamel/WinRate/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Banzamel/WinRate/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Banzamel/WinRate/compare/v0.2.9...v0.3.0
