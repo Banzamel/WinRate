@@ -7,6 +7,10 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- No stray "null" under the number pickers of the system bet, the wheel and Your numbers before a result.
+- Coupon ticket counts read correctly in Polish ("zakłady: 1").
+
 ## [0.5.0] - 2026-10-30
 
 ### Added

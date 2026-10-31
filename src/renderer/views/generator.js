@@ -59,7 +59,7 @@ function wheelCard(id, game) {
       draw();
     }));
     const r = st.result;
-    body.replaceChildren(
+    body.replaceChildren(); mount(body,
       hint(t('wheel.intro', { k: pool.pick })),
       picker,
       el('div', { class: 'form-row' },
@@ -105,7 +105,7 @@ function systemCard(id, game, view) {
     mineBtn.addEventListener('click', withBusy(mineBtn, run(false)));
     const r = st.result;
     const cost = r ? r.table.bets * game.price.amount : 0;
-    body.replaceChildren(
+    body.replaceChildren(); mount(body,
       hint(t('system.intro', { min: game.system.min, max: game.system.max })),
       el('div', { class: 'form-row' },
         el('label', {}, t('system.size'), select(st.m, Array.from({ length: game.system.max - game.system.min + 1 }, (_, i) => game.system.min + i).map((m) => [m, t('system.sizeN', { m, bets: comb(m, pool.pick), cost: money(comb(m, pool.pick) * game.price.amount, game.price.currency) })]), (v) => { st.m = Number(v); st.numbers = st.numbers.slice(0, st.m); st.result = null; draw(); })),
@@ -263,7 +263,7 @@ function mineCard(view, id, game) {
         el('p', {}, r.best === pick ? t('mine.alreadyDrawn') : t('mine.closest', { n: r.best })),
         el('div', { class: 'tickets' }, r.closest.map((d) => el('div', { class: 'ticket' }, el('span', { class: 'muted' }, date(d.date)), balls(d.pools, { hits: st.pools })))));
     }
-    body.replaceChildren(
+    body.replaceChildren(); mount(body,
       el('div', { class: 'form-row' },
         el('label', {}, t('mine.typeLabel'), typed),
         el('button', { class: 'btn', onClick: useTyped }, t('mine.use')),
