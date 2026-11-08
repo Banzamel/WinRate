@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-08
+
 ### Changed
 - The app is rebuilt on Tauri and React instead of Electron: a much smaller installer and less memory, same screens and
   calculations. Updating from 0.5.x moves your settings, history and saved coupons over and removes the old version.
@@ -177,7 +179,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Banzamel/WinRate/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Banzamel/WinRate/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Banzamel/WinRate/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Banzamel/WinRate/compare/v0.3.0...v0.4.0
