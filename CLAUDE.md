@@ -59,7 +59,9 @@ code you touch that breaks these rules.
   a test checks it).
 - **Heavy work** goes to the analysis worker (`features/analysis/worker/`, one task module per area) with progress
   and cancel support. Workers cannot call Tauri: the main thread reads/writes caches for them.
-- **Data location**: all app data lives in `<install dir>/data` (WebView2 profile included) — never write elsewhere.
+- **Data location**: all app data lives in `<install dir>/data` (WebView2 profile included) — never write under the user
+  profile (%APPDATA%, %LOCALAPPDATA%; only %TEMP% during install/update). Check every new plugin/feature for files it
+  writes (tauri-plugin-http "cookies" is off for that reason). Install folders: architecture.md → Data.
   File access only through `src-tauri/src/commands` (relative paths inside the data folder).
 - **Security**: keep the capabilities minimal (`src-tauri/capabilities/default.json`); HTTP only to mbnet.com.pl.
 - **Changelog**: every user-facing change gets a line under `## [Unreleased]` in `CHANGELOG.md`

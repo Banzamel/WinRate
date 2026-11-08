@@ -11,6 +11,8 @@ moves them into a numbered section automatically (see README → Releasing).
 - The app is rebuilt on Tauri and React instead of Electron: a much smaller installer and less memory, same screens and
   calculations. Updating from 0.5.x moves your settings, history and saved coupons over and removes the old version.
 - Updates are checked against signed release files (the app verifies the installer before running it).
+- Nothing is stored in the user profile any more: the app, its data and its browser cache live in one folder — the
+  folder of the previous version when updating, otherwise C:\Banzamel\WinRate. Uninstalling asks whether to delete the data.
 
 ## [0.5.1] - 2026-10-31
 

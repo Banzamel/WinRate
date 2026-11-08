@@ -54,4 +54,5 @@ npm run dist             # fetch-history + build in Docker → release/
 ```
 WinRate-Setup-X.Y.Z.exe /S /D=C:\path\to\WinRate     # /D must be last, no quotes
 ```
-Uninstall: `"<install dir>\uninstall.exe" /S`.
+Without /D a fresh install goes to `<system drive>\Banzamel\WinRate`, an install over the Electron app into its folder.
+Uninstall: `"<install dir>\uninstall.exe" /S` (silent keeps `data`; the wizard asks with "Delete the application data").

@@ -77,6 +77,19 @@ comes back with the result to be saved.
 
 ## Data
 
-Installed app: `<install dir>/data` (settings.json, history/, cache/, combinations/, webview/).
-The NSIS hooks (`src-tauri/windows/hooks.nsh`) keep `data/` across updates, delete it on uninstall, and on the first
-install over an Electron version (≤ 0.5.x) copy its settings/history/caches and uninstall it silently.
+Nothing is written under the user profile (%APPDATA%, %LOCALAPPDATA%) — only %TEMP% during install/update and the
+Start Menu/Desktop shortcuts. Installed app: `<install dir>/data` (settings.json, history/, cache/, combinations/,
+webview/ = the WebView2 profile). tauri-plugin-http is built without its "cookies" feature (it keeps a cookie jar in
+%LOCALAPPDATA%); the updater downloads to %TEMP%.
+
+Install folder (`src-tauri/windows/hooks.nsh`):
+- over an Electron version (≤ 0.5.x): the old app's folder. Its settings/history/caches are parked in %TEMP%, the old
+  app is uninstalled (its uninstaller takes the folder from HKCU\Software\<guid>\InstallLocation, which can be missing —
+  the hook sets it first; a fallback removes the folder when `resources\app.asar` is still there), and only when the
+  old files are verifiably gone is the data put back; otherwise the install stops and the old app stays;
+- a fresh install: `<system drive>\Banzamel\WinRate` (instead of the template's %LOCALAPPDATA%\WinRate, whose empty
+  folder the template's early SetOutPath creates and the hook removes again);
+- Tauri updates: the current folder (the template restores it from HKCU\Software\<publisher>\WinRate).
+
+`data/` survives updates; a real uninstall removes it only when "Delete the application data" is ticked, then the
+folder if empty.
