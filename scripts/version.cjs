@@ -1,9 +1,9 @@
 // Versioning helper. package.json "version" is the single source of truth.
-//   node scripts/version.js stamp         — (npm "version" hook) moves "Unreleased" changelog
+//   node scripts/version.cjs stamp         — (npm "version" hook) moves "Unreleased" changelog
 //                                           entries into a "## [x.y.z] - date" section
-//   node scripts/version.js check [tag]   — verifies the tag (or GITHUB_REF_NAME) matches
+//   node scripts/version.cjs check [tag]   — verifies the tag (or GITHUB_REF_NAME) matches
 //                                           package.json and that CHANGELOG.md has the version
-//   node scripts/version.js notes [file]  — writes the changelog section of the version (release body)
+//   node scripts/version.cjs notes [file]  — writes the changelog section of the version (release body)
 const fs = require('fs');
 const path = require('path');
 
@@ -53,4 +53,4 @@ const [cmd, arg] = process.argv.slice(2);
 if (cmd === 'stamp') stamp();
 else if (cmd === 'check') check(arg);
 else if (cmd === 'notes') notes(arg || 'release-notes.md');
-else fail('usage: node scripts/version.js stamp | check [tag] | notes [file]');
+else fail('usage: node scripts/version.cjs stamp | check [tag] | notes [file]');

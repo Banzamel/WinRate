@@ -1,41 +1,82 @@
 # Architecture
 
 ```
-renderer (src/renderer)  ──window.api──▶  preload.js  ──ipcRenderer.invoke──▶  main.js
-                                                                                 │
-                                       jobs.js (progress, cancel) ◀──────────────┤
-                                                                                 ▼
-                                                                    worker.js (worker_threads)
-                                                                                 │
-                                                                    engine/* (pure functions)
+React (src/app, src/features/*/components)
+   │ hooks: useServices(), useAppState(selector), useJob(lane)
+   ▼
+Services (classes, created in src/app/services.ts)          AppStore / JobProgress (src/shared/lib/Store)
+   SettingsService · HistoryService · AnalysisService · UpdateService · Toaster
+   │                                   │
+   ▼                                   ▼ JobRunner ── postMessage ──▶ engine.worker.ts ──▶ src/core/* (pure)
+src/platform (Tauri | browser) ──invoke──▶ Rust (src-tauri): data folder, dialogs, bundled history, plugins
 ```
 
-## Main process (`src/main`)
+## Tree
 
-- `main.js` — creates the window, serves the renderer over the privileged `app://` scheme, opens one
-  `HistoryStore` per game (seeded from the bundled history in `resources/history` on first start),
-  registers IPC handlers (`app:init`, `history:*`, `engine:*`, `settings:*`, `job:cancel`).
-- `settings.js` — app and per-game settings persisted in the data folder.
-- `jobs.js` — runs worker tasks, forwards `job:progress` to the renderer, supports cancel.
-- `worker.js` — long computations; caches filter exclusion maps (1 bit per combination) in
-  `data/combinations/<game>-<hash>.bin` + `.json` meta.
-- `app-updater.js` — electron-updater against GitHub Releases (`latest.yml`); disabled when unpackaged.
+```
+src/
+  app/          main.tsx (boot) · services.ts (wiring) · App.tsx · hooks.ts (context, useAppState, useDraft)
+                useAutoRefresh.ts · components/ (TitleBar, Sidebar, NavIcon, Toast)
+                state/ (AppState.ts, AppStore.ts, Toaster.ts)
+  core/         pure logic, no React/Tauri
+    combinatorics/  binomial · ranking (rank/unrank) · enumerate · hypergeometric
+    games/          definitions (GAMES) · rules (eras, tiers, odds) · schedule (draw times) · types
+    history/        validate · parse · download · HistoryStore (class, injected IO)
+    filters/        metrics · definitions (FILTERS, fixed values) · HistoryContext · historyChecks · checker
+                    census · distributions · survival · types
+    stats/          chiSquare · numbers · pairs · neighbours · patterns · repeats · report · types
+    bias/           distributions (phi, Kolmogorov) · posterior · drift · memory (+ runs test) · analyze
+    popularity/     scorer · expectedValue
+    bets/           wheel · systemTable
+    simulate/       rng · weights · filtering · bag · player · generate · backtest · untilHit
+                    untilHitSystem · systemNumbers · types
+    physics/        ballEffect · normalQuantile
+  features/     components/ · hooks/ · services · types.ts · index.ts (public API)
+    analysis/   AnalysisService · JobRunner · JobProgress · CensusCache · DistributionCache · censusKey
+                worker/ (engine.worker.ts, protocol.ts, WorkerCensus.ts, tasks/{stats,ticket,simulation}Tasks.ts)
+                hooks/useJob · components/LaneProgress
+    history/    HistoryService · hooks/useHistoryActions · components/(HistoryView, SourcesCard, ManualEntryCard, DrawListCard)
+    settings/   SettingsService · components/SettingsView
+    update/     UpdateService · updateText · components/(UpdateBanner, UpdateSection, UpdateActions)
+    game/       gameInfo · components/(GameView, GameHeader, Countdown)
+    overview/   components/(OverviewView, RulesRow, TiersCard, LatestDrawsCard, EvCard) · hooks/useExpectedValue
+    filters/    describeFilter · hooks/useFilterCensus · components/(FiltersView, FilterRow, FilterSummary)
+    stats/      bucketize · ballSets · hooks/useStatsReport · components/(StatsView + one card per file)
+    generator/  coupons · hooks/useCoupons · components/(GeneratorView, TicketsCard, MineCard, SystemCard, WheelCard, CouponsCard…)
+    simulation/ hooks/useSimulation · components/(SimulationView, BacktestCard, UntilHitCard, *Result)
+    about/      sources · components/AboutView
+  platform/     types.ts · index.ts (createPlatform) · tauri/ (TauriStorage, TauriDialogs, TauriWindow, TauriUpdates)
+                browser/ (BrowserStorage, BrowserDialogs)
+  shared/       ui/ (Ball, Balls, Card, Hint, Stat, Tabs, Table, CompareBars, NumberChart, FitBadge, PBadge,
+                ProgressBar, Spinner, BusyButton, NumberInput, Select, Picker) · hooks/ (useStore, useNow)
+                i18n/ (Translator, I18nContext) · lib/ (Store, sha1, text)
+  lang/         pl.json · en.json
+  styles/       index.css + base, titlebar, layout, tabs, cards, buttons, balls, tables, charts, feedback, hints, coupons
+src-tauri/
+  src/main.rs   wiring only
+  src/error.rs  the command error type (serialized as its message)
+  src/commands/ data.rs (read/write text and bytes) · history.rs (bundled history) · dialogs.rs (import/export)
+  src/storage/  data_dir.rs (where the data folder is) · files.rs (path checks, atomic writes; unit tests)
+  src/window/   the main window and the "folder not writable" message
+  capabilities/default.json · tauri.conf.json · windows/hooks.nsh
+test/           mirrors src/: core/<domain>/*.test.ts, features/…, shared/…, app/…, helpers/fakeHistory.ts
+```
 
-## Engine (`src/main/engine`)
+## State
 
-| file | responsibility |
-| --- | --- |
-| `games.js` | game definitions, rule eras, draw schedule, prize tiers, odds |
-| `combinatorics.js` | binomials, ranking/unranking of combinations |
-| `history.js` | parsing/import/download/validation, `HistoryStore` |
-| `filters.js` | exclusion filters, presets, fixed vs history-dependent split |
-| `stats.js` | frequencies, gaps, pairs, shapes, chi-square tests |
-| `bias.js` | ball/machine physics, empirical-Bayes estimates |
-| `simulate.js` | strategies, generator, walk-forward backtest, "until it hits" |
-| `popularity.js` | how many other players likely pick a ticket |
-| `wheel.js` / `system.js` | abbreviated wheels, Lotto system bets (7–12 numbers) |
+- `AppStore` holds settings, game info, the history of every game, cached results per game (dropped when the history
+  changes), drafts (half-done pickers), the update state and the toast. Updates are immutable patches.
+- `JobProgress` holds the progress of running worker lanes separately, so progress ticks only re-render progress bars.
+
+## Worker
+
+One Web Worker per lane (`stats`, `filters`, `generate`, `sim`, `ev`); cancel terminates the worker. The census
+of the fixed filters (1 bit per combination) is cached in `data/combinations/<game>-<sha1>.bin` + `.bin.json`
+(names as in the Electron versions): `CensusCache` reads it, passes it to the worker, and a freshly computed one
+comes back with the result to be saved.
 
 ## Data
 
-Packaged app: `<install dir>/data` (history, settings, caches, Chromium profile). Dev: `WINRATE_USERDATA`.
-The NSIS script (`build/installer.nsh`) preserves `data/` across updates and deletes it on uninstall.
+Installed app: `<install dir>/data` (settings.json, history/, cache/, combinations/, webview/).
+The NSIS hooks (`src-tauri/windows/hooks.nsh`) keep `data/` across updates, delete it on uninstall, and on the first
+install over an Electron version (≤ 0.5.x) copy its settings/history/caches and uninstall it silently.

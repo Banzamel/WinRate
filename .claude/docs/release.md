@@ -2,12 +2,22 @@
 
 The installer is built only by GitHub Actions (`windows-latest`), never uploaded by hand.
 
+## Secrets (once)
+
+- `TAURI_SIGNING_PRIVATE_KEY` — contents of the updater private key (kept outside the repo, e.g.
+  `%USERPROFILE%\.tauri\winrate.key`; its public key is `plugins.updater.pubkey` in `src-tauri/tauri.conf.json`).
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — empty if the key has no password.
+
+Losing the private key means installed apps can no longer verify updates.
+
 ## Workflows (`.github/workflows`)
 
-- `release.yml` — tests on every push/PR to `main`; on a pushed `v*` tag or a published release it calls `build.yml`.
-- `build.yml` (reusable) — checks out the tag, `npm ci`, `npm test`, aligns `package.json` version with the tag,
-  `fetch-history`, writes release notes from `CHANGELOG.md`, `electron-builder --win nsis`, uploads
-  `WinRate-Setup-X.Y.Z.exe`, `.blockmap` and `latest.yml` to the GitHub release.
+- `release.yml` — tests (`npm test`, `npm run build`) on every push/PR to `main`; on a pushed `v*` tag or a
+  published release it calls `build.yml`.
+- `build.yml` (reusable) — checks out the tag, Rust + Node, `npm ci`, `npm test`, aligns `package.json` with the
+  tag, `fetch-history`, release notes from `CHANGELOG.md`, `tauri build` with signed updater artifacts, then
+  `scripts/release-manifests.mjs`, and uploads `WinRate-Setup-X.Y.Z.exe`, `.exe.sig`, `latest.json` (Tauri
+  updater) and `latest.yml` (so Electron installs ≤ 0.5.x update into the Tauri version).
 - `publish.yml` — manual "Publish new version": bumps patch/minor/major on `main`, commits, tags, pushes,
   then builds via `build.yml`.
 
@@ -21,19 +31,27 @@ gh run watch
 ## Option B — locally
 
 ```
-npm version minor        # runs scripts/version.js stamp: Unreleased → ## [X.Y.Z] - date, commits, tags
+npm version minor        # runs scripts/version.cjs stamp: Unreleased → ## [X.Y.Z] - date, commits, tags
 git push origin main --follow-tags
 ```
 
 ## After the run
 
-- `gh release view vX.Y.Z` — must list the `.exe`, `.blockmap` and `latest.yml`.
-- Installed apps pick the update up from `latest.yml` (banner → Download → Restart and install).
-- The installer is unsigned: SmartScreen shows "More info → Run anyway".
+- `gh release view vX.Y.Z` — must list the `.exe`, `.exe.sig`, `latest.json` and `latest.yml`.
+- Installed apps pick the update up from `latest.json` (banner → Download → Restart and install); the installer
+  runs in passive mode and keeps `data/`.
+- The installer is not Authenticode-signed: SmartScreen shows "More info → Run anyway".
+
+## Local installer (no Rust on the host)
+
+```
+npm run docker:image     # once: Linux image with Rust, cargo-xwin, NSIS, Node
+npm run dist             # fetch-history + build in Docker → release/
+```
 
 ## Silent install for testing
 
 ```
 WinRate-Setup-X.Y.Z.exe /S /D=C:\path\to\WinRate     # /D must be last, no quotes
 ```
-Uninstall: `"<install dir>\Uninstall WinRate.exe" /S`.
+Uninstall: `"<install dir>\uninstall.exe" /S`.
