@@ -15,7 +15,7 @@ Follow `.claude/docs/release.md`. Steps:
    Never do both — that creates two versions.
 4. Watch: `gh run list --workflow publish.yml -L 1`, then `gh run watch <id> --exit-status`.
    On failure: `gh run view <id> --log-failed`, fix, and release a new patch (do not move existing tags).
-5. Verify: `gh release view vX.Y.Z --json assets` lists `WinRate-Setup-X.Y.Z.exe`, `.exe.sig`, `latest.json`, `latest.yml`.
+5. Verify: `gh release view vX.Y.Z --json assets` lists exactly `WinRate-Setup-X.Y.Z.exe`, `latest.json`, `latest.yml`.
 6. Smoke test on Windows: `gh release download vX.Y.Z -p "*.exe" -D <scratch dir>`, install silently
    (`/S /D=<dir>`), start `winrate.exe`, confirm the process stays alive and `<dir>\data` gets created,
    then close it. Report the result to the user.

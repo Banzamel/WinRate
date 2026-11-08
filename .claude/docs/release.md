@@ -16,7 +16,7 @@ Losing the private key means installed apps can no longer verify updates.
   published release it calls `build.yml`.
 - `build.yml` (reusable) — checks out the tag, Rust + Node, `npm ci`, `npm test`, aligns `package.json` with the
   tag, `fetch-history`, release notes from `CHANGELOG.md`, `tauri build` with signed updater artifacts, then
-  `scripts/release-manifests.mjs`, and uploads `WinRate-Setup-X.Y.Z.exe`, `.exe.sig`, `latest.json` (Tauri
+  `scripts/release-manifests.mjs`, and uploads `WinRate-Setup-X.Y.Z.exe`, `latest.json` (Tauri
   updater) and `latest.yml` (so Electron installs ≤ 0.5.x update into the Tauri version).
 - `publish.yml` — manual "Publish new version": bumps patch/minor/major on `main`, commits, tags, pushes,
   then builds via `build.yml`.
@@ -37,7 +37,7 @@ git push origin main --follow-tags
 
 ## After the run
 
-- `gh release view vX.Y.Z` — must list the `.exe`, `.exe.sig`, `latest.json` and `latest.yml`.
+- `gh release view vX.Y.Z` — must list exactly the `.exe`, `latest.json` and `latest.yml` (no `.sig`, no `.blockmap`).
 - Installed apps pick the update up from `latest.json` (banner → Download → Restart and install); the installer
   runs in passive mode and keeps `data/`.
 - The installer is not Authenticode-signed: SmartScreen shows "More info → Run anyway".

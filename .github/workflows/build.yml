@@ -2,7 +2,7 @@ name: Build installer
 
 # Reusable: builds the Windows installer (Tauri, NSIS) for a version tag and attaches it to the
 # GitHub release of that tag, together with:
-#   - the updater signature (.sig) and latest.json, which installed apps (0.6+) read to update;
+#   - latest.json (with the updater signature in it), which installed apps (0.6+) read to update;
 #   - latest.yml, which installed Electron versions (≤ 0.5.x) read, so they update into this one.
 # Needs the repository secrets TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 # if the key has one).
@@ -63,7 +63,6 @@ jobs:
           tag_name: ${{ inputs.tag }}
           files: |
             release/WinRate-Setup-*.exe
-            release/WinRate-Setup-*.exe.sig
             release/latest.json
             release/latest.yml
           body_path: ${{ inputs.notes && 'release-notes.md' || '' }}
