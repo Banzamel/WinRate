@@ -49,3 +49,7 @@ Each game has its own tab:
 - Play responsibly — help with gambling problems in Poland: 801 889 880.
 - Changes in each version: [Releases](https://github.com/Banzamel/WinRate/releases) ·
   new version: Actions → **Publish new version** → Run workflow.
+
+## License
+
+Open source under the [MIT License](LICENSE).
