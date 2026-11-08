@@ -7,6 +7,8 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-08
+
 ### Changed
 - **Slimmer title bar, the same as in LoL Helper and PC Cleaner**: 38 px high instead of 44, sharp Windows 11-style
   minimize, maximize and close icons at every display scale (restore shows two squares while the window is
@@ -195,7 +197,8 @@ moves them into a numbered section automatically (see README → Releasing).
   and counts the tickets needed to hit them.
 - Polish and English user interface.
 
-[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/Banzamel/WinRate/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/Banzamel/WinRate/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/Banzamel/WinRate/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Banzamel/WinRate/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Banzamel/WinRate/compare/v0.5.1...v0.6.0
