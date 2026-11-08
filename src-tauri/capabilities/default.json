@@ -1,0 +1,20 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the WinRate window may do.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    "opener:default",
+    { "identifier": "http:default", "allow": [{ "url": "https://www.mbnet.com.pl/*" }] },
+    "updater:default",
+    "process:allow-restart"
+  ]
+}

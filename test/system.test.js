@@ -1,9 +1,10 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { GAMES, tierOdds } = require('../src/main/engine/games');
-const { systemTable } = require('../src/main/engine/system');
-const { neighbourStats } = require('../src/main/engine/stats');
-const { createRng, generate } = require('../src/main/engine/simulate');
+import test from 'node:test';
+import assert from 'node:assert';
+import { GAMES, tierOdds } from '../src/engine/games.js';
+import { systemTable } from '../src/engine/system.js';
+import { neighbourStats } from '../src/engine/stats.js';
+import { createRng, generate, systemNumbers } from '../src/engine/simulate.js';
+import { defaultFilters } from '../src/engine/filters.js';
 
 test('system bet of 8 numbers', () => {
   const t = systemTable(49, 6, 8, tierOdds(GAMES.lotto));
@@ -35,8 +36,6 @@ test('tickets of a coupon share at most maxCommon numbers', () => {
 });
 
 test('system numbers whose bets all pass the filters', () => {
-  const { systemNumbers } = require('../src/main/engine/simulate');
-  const { defaultFilters } = require('../src/main/engine/filters');
   const r = systemNumbers(GAMES.lotto, [], { m: 9, config: defaultFilters(GAMES.lotto.pools[0]), seed: 9 });
   assert.strictEqual(r.pass, 84);
   assert.strictEqual(r.numbers.length, 9);

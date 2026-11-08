@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { GAMES, tierOdds, combinationCount, nextDraws, eraOf, tierFor } = require('../src/main/engine/games');
+import test from 'node:test';
+import assert from 'node:assert';
+import { GAMES, tierOdds, combinationCount, nextDraws, eraOf, tierFor, lastDraw } from '../src/engine/games.js';
 
 test('published odds of Lotto', () => {
   const odds = Object.fromEntries(tierOdds(GAMES.lotto).map((t) => [t.id, Math.round(t.oneIn)]));
@@ -34,7 +34,6 @@ test('tier lookup', () => {
 });
 
 test('latest past draw', () => {
-  const { lastDraw } = require('../src/main/engine/games');
   // Friday noon: the latest Lotto draw was Thursday 22:00 Warsaw time
   assert.strictEqual(lastDraw(GAMES.lotto, new Date('2026-10-30T12:00:00Z')).toISOString(), '2026-10-29T21:00:00.000Z');
 });

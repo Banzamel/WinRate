@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { binom, rank, unrank, forEachCombination, matchProbability } = require('../src/main/engine/combinatorics');
+import test from 'node:test';
+import assert from 'node:assert';
+import { binom, rank, unrank, forEachCombination, matchProbability } from '../src/engine/combinatorics.js';
 
 test('binomial coefficients of the games', () => {
   assert.strictEqual(binom(49, 6), 13983816);

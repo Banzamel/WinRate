@@ -43,6 +43,9 @@ Each game has its own tab:
   fewer tickets per covered shape, and tickets few others play (a win is shared less).
 - New results are downloaded at start; your saved coupons are checked against them automatically.
 - All data is stored in the `data` folder inside the install folder; uninstalling removes everything.
+- Built with [Tauri 2](https://tauri.app) (Rust shell, WebView2) and React + TypeScript; the statistics engine is plain
+  JavaScript running in Web Workers. Development: `npm ci`, `npm test`, `npm run dev` (UI in a browser) or
+  `npm run tauri dev` (needs Rust); the installer is built in Docker with `npm run dist` or by GitHub Actions.
 - Play responsibly — help with gambling problems in Poland: 801 889 880.
 - Changes in each version: [Releases](https://github.com/Banzamel/WinRate/releases) ·
   new version: Actions → **Publish new version** → Run workflow.

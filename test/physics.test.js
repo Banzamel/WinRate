@@ -1,11 +1,11 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { GAMES, tierOdds, combinationCount } = require('../src/main/engine/games');
-const { posterior, analyze, memory, kolmogorovP } = require('../src/main/engine/bias');
-const { createScorer, jackpotShare, expectedValue } = require('../src/main/engine/popularity');
-const { wheel } = require('../src/main/engine/wheel');
-const { createRng } = require('../src/main/engine/simulate');
-const { binom } = require('../src/main/engine/combinatorics');
+import test from 'node:test';
+import assert from 'node:assert';
+import { GAMES, tierOdds, combinationCount } from '../src/engine/games.js';
+import { posterior, analyze, memory, kolmogorovP } from '../src/engine/bias.js';
+import { createScorer, jackpotShare, expectedValue } from '../src/engine/popularity.js';
+import { wheel } from '../src/engine/wheel.js';
+import { createRng } from '../src/engine/simulate.js';
+import { binom } from '../src/engine/combinatorics.js';
 
 const draws = (n, seed, size = 49, pick = 6, heavy = null, extra = 0) => {
   const rng = createRng(seed);

@@ -1,10 +1,10 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { GAMES } = require('../src/main/engine/games');
-const { binom, forEachCombination } = require('../src/main/engine/combinatorics');
-const { createMeter, defaultFilters, filterValues, resolveFilters, createChecker, census, distributions, HistoryContext, historySurvival } = require('../src/main/engine/filters');
-const { chiSquare, numberStats, pairStats } = require('../src/main/engine/stats');
-const { createRng, generate, backtest, untilHit, untilHitSystem } = require('../src/main/engine/simulate');
+import test from 'node:test';
+import assert from 'node:assert';
+import { GAMES } from '../src/engine/games.js';
+import { binom, forEachCombination } from '../src/engine/combinatorics.js';
+import { createMeter, defaultFilters, filterValues, resolveFilters, createChecker, census, distributions, HistoryContext, historySurvival } from '../src/engine/filters.js';
+import { chiSquare, numberStats, pairStats } from '../src/engine/stats.js';
+import { createRng, generate, backtest, untilHit, untilHitSystem } from '../src/engine/simulate.js';
 
 // A small 6-of-20 game keeps the exhaustive checks fast.
 const SMALL = { size: 20, pick: 6 };

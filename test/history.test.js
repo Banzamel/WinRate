@@ -1,10 +1,10 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { GAMES } = require('../src/main/engine/games');
-const { parseLine, parseText, HistoryStore, validateDraw } = require('../src/main/engine/history');
+import test from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { GAMES } from '../src/engine/games.js';
+import { parseLine, parseText, HistoryStore, validateDraw } from '../src/engine/history.js';
 
 test('parses the mbnet and CSV layouts', () => {
   assert.deepStrictEqual(parseLine(GAMES.lotto, '1. 27.01.1957 8,12,31,39,43,45'), { date: '1957-01-27', pools: [[8, 12, 31, 39, 43, 45]] });
@@ -24,34 +24,41 @@ test('rejects numbers outside the rules of the date', () => {
   assert.strictEqual(parseText(GAMES.lotto, 'header\n1. 27.01.1957 8,12,31,39,43,45\n').skipped, 1);
 });
 
-test('store keeps several draws of one date (Lotto drew twice a day in 1965–1991)', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwr-'));
-  const store = new HistoryStore(GAMES.lotto, dir);
+// The store over plain files in a temporary folder (the app stores them through Tauri).
+const fileIo = (dir) => ({
+  read: (name) => { try { return fs.readFileSync(path.join(dir, name), 'utf8'); } catch { return null; } },
+  write: (name, text) => fs.writeFileSync(path.join(dir, name), text),
+});
+const tempIo = () => fileIo(fs.mkdtempSync(path.join(os.tmpdir(), 'pwr-')));
+
+test('store keeps several draws of one date (Lotto drew twice a day in 1965–1991)', async () => {
+  const io = tempIo();
+  const store = await HistoryStore.open(GAMES.lotto, io);
   const a = { date: '1980-01-06', pools: [[1, 2, 3, 4, 5, 6]] };
   const b = { date: '1980-01-06', pools: [[7, 8, 9, 10, 11, 12]] };
   // An older store kept only the first draw of the day; the full source adds the second one.
-  store.merge([a]);
-  assert.deepStrictEqual(store.merge([a, b], { replace: true }), { added: 1, changed: 0, total: 2 });
-  assert.deepStrictEqual(store.merge([a, b], { replace: true }), { added: 0, changed: 0, total: 2 });
-  assert.deepStrictEqual(new HistoryStore(GAMES.lotto, dir).list(), [a, b]);
-  assert.ok(store.remove(b.date, b.pools));
+  await store.merge([a]);
+  assert.deepStrictEqual(await store.merge([a, b], { replace: true }), { added: 1, changed: 0, total: 2 });
+  assert.deepStrictEqual(await store.merge([a, b], { replace: true }), { added: 0, changed: 0, total: 2 });
+  assert.deepStrictEqual((await HistoryStore.open(GAMES.lotto, io)).list(), [a, b]);
+  assert.ok(await store.remove(b.date, b.pools));
   assert.deepStrictEqual(store.list(), [a]);
   // A store saved by an older version (no format) asks for one full download.
-  fs.writeFileSync(path.join(dir, 'lotto.json'), JSON.stringify({ game: 'lotto', draws: [a] }));
-  const old = new HistoryStore(GAMES.lotto, dir);
+  io.write('lotto.json', JSON.stringify({ game: 'lotto', draws: [a] }));
+  const old = await HistoryStore.open(GAMES.lotto, io);
   assert.ok(old.outdated);
-  old.save();
-  assert.ok(!new HistoryStore(GAMES.lotto, dir).outdated);
+  await old.save();
+  assert.ok(!(await HistoryStore.open(GAMES.lotto, io)).outdated);
 });
 
-test('store merges by date and persists', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwr-'));
-  const store = new HistoryStore(GAMES.lotto, dir);
-  assert.deepStrictEqual(store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 6]] }, { date: '2020-01-01', pools: [[7, 8, 9, 10, 11, 12]] }]), { added: 2, changed: 0, total: 2 });
-  assert.strictEqual(store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 7]] }]).changed, 0);
-  assert.strictEqual(store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 7]] }], { replace: true }).changed, 1);
-  const again = new HistoryStore(GAMES.lotto, dir);
+test('store merges by date and persists', async () => {
+  const io = tempIo();
+  const store = await HistoryStore.open(GAMES.lotto, io);
+  assert.deepStrictEqual(await store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 6]] }, { date: '2020-01-01', pools: [[7, 8, 9, 10, 11, 12]] }]), { added: 2, changed: 0, total: 2 });
+  assert.strictEqual((await store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 7]] }])).changed, 0);
+  assert.strictEqual((await store.merge([{ date: '2020-01-02', pools: [[1, 2, 3, 4, 5, 7]] }], { replace: true })).changed, 1);
+  const again = await HistoryStore.open(GAMES.lotto, io);
   assert.deepStrictEqual(again.list().map((d) => d.date), ['2020-01-01', '2020-01-02']);
-  assert.ok(again.remove('2020-01-01'));
-  assert.strictEqual(new HistoryStore(GAMES.lotto, dir).list().length, 1);
+  assert.ok(await again.remove('2020-01-01'));
+  assert.strictEqual((await HistoryStore.open(GAMES.lotto, io)).list().length, 1);
 });

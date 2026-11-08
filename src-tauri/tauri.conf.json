@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WinRate",
+  "version": "../package.json",
+  "identifier": "pl.banzamel.winrate",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "Rafał Polak (Banzamel)",
+    "copyright": "© Rafał Polak (Banzamel), MIT License",
+    "category": "Utility",
+    "shortDescription": "Lottery lab for Lotto and Eurojackpot",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "resources": { "../resources/history/": "history/" },
+    "createUpdaterArtifacts": false,
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "./windows/hooks.nsh",
+        "installerIcon": "icons/icon.ico",
+        "languages": ["Polish", "English"],
+        "displayLanguageSelector": false
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA1OERCQjA4MThDQzRFQzIKUldUQ1Rzd1lDTHVOQlU4dGE2N2NSOHBLcmZrWHN4YnNwSDdaZm1CVjlmYlZvMWRuNkZRK0QrNEUK",
+      "endpoints": ["https://github.com/Banzamel/WinRate/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  }
+}

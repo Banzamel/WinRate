@@ -7,6 +7,11 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- The app is rebuilt on Tauri and React instead of Electron: a much smaller installer and less memory, same screens and
+  calculations. Updating from 0.5.x moves your settings, history and saved coupons over and removes the old version.
+- Updates are checked against signed release files (the app verifies the installer before running it).
+
 ## [0.5.1] - 2026-10-31
 
 ### Fixed

@@ -2,8 +2,8 @@
   "name": "winrate",
   "productName": "WinRate",
   "version": "0.5.1",
-  "description": "Windows desktop lottery lab for Lotto and Eurojackpot: full draw history, exact odds, statistics with significance tests, combination filters measured exactly, ticket generator and walk-forward simulations.",
-  "main": "src/main/main.js",
+  "description": "Windows desktop (Tauri) lottery lab for Lotto and Eurojackpot: full draw history, exact odds, statistics with significance tests, combination filters measured exactly, ticket generator and walk-forward simulations.",
+  "type": "module",
   "author": "Rafał Polak (Banzamel)",
   "license": "MIT",
   "homepage": "https://github.com/Banzamel/WinRate#readme",
@@ -22,66 +22,41 @@
     "probability",
     "combinatorics",
     "simulation",
-    "electron"
+    "tauri"
   ],
   "private": true,
   "scripts": {
-    "start": "electron .",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "tauri": "tauri",
     "test": "node --test test/*.test.js",
-    "fetch-history": "node scripts/fetch-history.js",
-    "version:check": "node scripts/version.js check",
-    "version": "node scripts/version.js stamp && git add CHANGELOG.md",
+    "typecheck": "tsc --noEmit",
+    "fetch-history": "node scripts/fetch-history.mjs",
+    "version:check": "node scripts/version.cjs check",
+    "version": "node scripts/version.cjs stamp && git add CHANGELOG.md",
     "release:patch": "npm version patch -m \"Release v%s\"",
     "release:minor": "npm version minor -m \"Release v%s\"",
     "release:major": "npm version major -m \"Release v%s\"",
-    "dist": "npm run fetch-history && electron-builder --win nsis --publish never"
-  },
-  "devDependencies": {
-    "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
-  },
-  "build": {
-    "appId": "pl.banzamel.winrate",
-    "productName": "WinRate",
-    "directories": {
-      "output": "dist",
-      "buildResources": "build"
-    },
-    "files": [
-      "src/**/*",
-      "build/icon.png",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "resources/history",
-        "to": "history"
-      }
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "shortcutName": "WinRate",
-      "include": "build/installer.nsh",
-      "deleteAppDataOnUninstall": true
-    },
-    "artifactName": "WinRate-Setup-${version}.${ext}",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Banzamel",
-        "repo": "WinRate",
-        "releaseType": "release"
-      }
-    ]
+    "docker:image": "docker build -t winrate-build docker",
+    "dist": "npm run fetch-history && sh docker/build.sh"
   },
   "dependencies": {
-    "electron-updater": "^6.8.11"
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-http": "^2.5.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "@tauri-apps/plugin-process": "^2.3.0",
+    "@tauri-apps/plugin-updater": "^2.9.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.0",
+    "@types/node": "^24.12.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.4"
   }
 }
