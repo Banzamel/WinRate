@@ -14,11 +14,25 @@ pub fn create_main(app: &App, data_dir: &Path) -> tauri::Result<()> {
         .inner_size(1360.0, 880.0)
         .min_inner_size(1100.0, 700.0)
         .decorations(false)
+        .shadow(native_frame())
         .visible(false)
         .background_color(tauri::window::Color(0xee, 0xf2, 0xf8, 0xff))
         .data_directory(data_dir.join("webview"))
         .build()?;
     Ok(())
+}
+
+// Windows 11 gives the frameless window its border, shadow and rounded corners through Tauri's
+// window shadow. On Windows 10 that frame has no top edge, so it stays off and the page draws a
+// 1px border on all four sides instead (src/shared/ui/titlebar).
+#[cfg(windows)]
+fn native_frame() -> bool {
+    windows_version::OsVersion::current().build >= 22000
+}
+
+#[cfg(not(windows))]
+fn native_frame() -> bool {
+    false
 }
 
 // All data stays in one folder: if it cannot be written, say so and quit instead of scattering

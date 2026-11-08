@@ -2,6 +2,7 @@
   "app.name": "WinRate",
   "window.minimize": "Minimalizuj",
   "window.maximize": "Maksymalizuj",
+  "window.restore": "Przywróć",
   "window.close": "Zamknij",
   "nav.about": "Matematyka",
   "nav.settings": "Ustawienia",

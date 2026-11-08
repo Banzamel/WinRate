@@ -18,8 +18,18 @@ export interface Dialogs {
   confirm(text: string): Promise<boolean>;
 }
 
-export type WindowAction = 'minimize' | 'maximize' | 'close';
-export interface WindowControls { run(action: WindowAction): Promise<void>; show(): Promise<void> }
+// The frameless window: shown once the UI has rendered, and what the title bar needs
+// (src/shared/ui/titlebar): its buttons and the sizes telling whether it is maximized and
+// whether Windows draws its border.
+export interface WindowSize { maximized: boolean; outerWidth: number; innerWidth: number }
+export interface WindowControls {
+  show(): Promise<void>;
+  minimize(): Promise<void>;
+  toggleMaximize(): Promise<void>;
+  close(): Promise<void>;
+  measure(): Promise<WindowSize>;
+  onResized(handler: () => void): Promise<() => void>;
+}
 
 export type DownloadEvent = { kind: 'started'; total: number } | { kind: 'progress'; bytes: number };
 export interface AvailableUpdate {
