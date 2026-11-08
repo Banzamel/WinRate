@@ -13,7 +13,8 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
-tauri-plugin-http = "2"
+# No "cookies" feature: it keeps a cookie jar in %LOCALAPPDATA% (nothing may be written outside the app folder).
+tauri-plugin-http = { version = "2", default-features = false, features = ["rustls-tls", "http2", "charset", "system-proxy"] }
 tauri-plugin-opener = "2"
 tauri-plugin-process = "2"
 tauri-plugin-updater = "2"
