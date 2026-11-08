@@ -7,6 +7,9 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Fixed
+- The release build of 0.6.0 failed before publishing, so 0.6.1 is the first published version on Tauri (all 0.6.0 changes are in it).
+
 ## [0.6.0] - 2026-11-08
 
 ### Changed
