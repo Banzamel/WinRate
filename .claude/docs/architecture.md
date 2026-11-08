@@ -46,12 +46,13 @@ src/
     simulation/ hooks/useSimulation · components/(SimulationView, BacktestCard, UntilHitCard, *Result)
     about/      sources · components/AboutView
   platform/     types.ts · index.ts (createPlatform) · tauri/ (TauriStorage, TauriDialogs, TauriWindow, TauriUpdates)
-                browser/ (BrowserStorage, BrowserDialogs)
+                browser/ (BrowserStorage, BrowserDialogs, BrowserWindow)
   shared/       ui/ (Ball, Balls, Card, Hint, Stat, Tabs, Table, CompareBars, NumberChart, FitBadge, PBadge,
-                ProgressBar, Spinner, BusyButton, NumberInput, Select, Picker) · hooks/ (useStore, useNow)
+                ProgressBar, Spinner, BusyButton, NumberInput, Select, Picker; titlebar/ = the frameless window's title
+                bar, kept identical in LoL Helper and PC Cleaner) · hooks/ (useStore, useNow)
                 i18n/ (Translator, I18nContext) · lib/ (Store, sha1, text)
   lang/         pl.json · en.json
-  styles/       index.css + base, titlebar, layout, tabs, cards, buttons, balls, tables, charts, feedback, hints, coupons
+  styles/       index.css + base, layout, tabs, cards, buttons, balls, tables, charts, feedback, hints, coupons
 src-tauri/
   src/main.rs   wiring only
   src/error.rs  the command error type (serialized as its message)

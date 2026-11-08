@@ -7,6 +7,12 @@ moves them into a numbered section automatically (see README → Releasing).
 
 ## [Unreleased]
 
+### Changed
+- **Slimmer title bar, the same as in LoL Helper and PC Cleaner**: 38 px high instead of 44, sharp Windows 11-style
+  minimize, maximize and close icons at every display scale (restore shows two squares while the window is
+  maximized), and on Windows 10 a thin border on all four sides of the window, the top included (Windows 11 draws its
+  own border, shadow and rounded corners). A maximized window has no border.
+
 ## [0.6.2] - 2026-11-08
 
 ### Fixed

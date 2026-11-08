@@ -2,12 +2,13 @@
 import type { Platform } from '../types';
 import { BrowserDialogs } from './BrowserDialogs';
 import { BrowserStorage } from './BrowserStorage';
+import { BrowserWindow } from './BrowserWindow';
 
 export function createBrowserPlatform(): Platform {
   return {
     storage: new BrowserStorage(),
     dialogs: new BrowserDialogs(),
-    window: { run: async () => { /* no window controls in a tab */ }, show: async () => { /* always visible */ } },
+    window: new BrowserWindow(),
     updates: null,
     fetch: (url, init) => fetch(url, init),
     openExternal: async (url) => { window.open(url, '_blank', 'noopener'); },

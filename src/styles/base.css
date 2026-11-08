@@ -18,6 +18,15 @@
   --amber: #c77700;
   --radius: 10px;
   --font: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+  /* Title bar (layout in shared/ui/titlebar/titlebar.css) and the window border */
+  --titlebar-bg: var(--navy-2);
+  --titlebar-line: var(--navy-2);
+  --titlebar-text: #fff;
+  --titlebar-button: #c9d6ee;
+  --titlebar-button-hover: rgba(255, 255, 255, .15);
+  --titlebar-button-hover-text: #fff;
+  --titlebar-button-press: rgba(255, 255, 255, .25);
+  --window-border: var(--navy-2);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
