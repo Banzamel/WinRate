@@ -1,0 +1,33 @@
+/* Charts */
+.nchart { display: flex; flex-direction: column; gap: 4px; }
+.nchart-plot { position: relative; height: 170px; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line); }
+.nchart-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.nchart-bar { width: 100%; background: var(--gold); border-radius: 3px 3px 0 0; opacity: .85; }
+.nchart-bar.extra { background: var(--blue); }
+.nchart-bar.hot { background: var(--red); }
+.nchart-bar.cold { background: #9aa8bd; }
+.nchart-line { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--navy); opacity: .7; z-index: 1; pointer-events: none; }
+.nchart-axis { display: flex; gap: 2px; }
+.nchart-axis span { flex: 1; text-align: center; font-size: 10px; color: var(--muted); }
+.nchart-scale { font-size: 11px; text-align: right; }
+.cmp { display: flex; flex-direction: column; gap: 4px; }
+.cmp-row { display: grid; grid-template-columns: 64px 1fr 120px; gap: 8px; align-items: center; font-size: 12px; }
+.cmp-label { color: var(--muted); text-align: right; }
+.cmp-bars { display: flex; flex-direction: column; gap: 2px; }
+.cmp-bar { height: 7px; border-radius: 3px; min-width: 1px; }
+.cmp-bar.obs { background: var(--gold); }
+.cmp-bar.exp { background: #b7c3d6; }
+.cmp-val { color: var(--muted); font-variant-numeric: tabular-nums; }
+.fit { display: inline-block; white-space: nowrap; font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.fit.good { color: var(--green); border-color: var(--green); }
+.fit.warn { color: var(--amber); border-color: var(--amber); }
+.fit.bad { color: var(--red); border-color: var(--red); }
+.verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 6px 18px; margin: 8px 0; }
+.verdict { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--bg-3); padding: 3px 0; }
+.patterns { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px 24px; }
+.pairs { display: grid; grid-template-columns: 1fr 1fr auto; gap: 18px; }
+.heat { width: 245px; height: 245px; image-rendering: pixelated; background: var(--bg-0); border: 1px solid var(--line); }
+.num-list { margin-bottom: 8px; }
+.num-items { display: flex; flex-wrap: wrap; gap: 10px; }
+.num-item { display: inline-flex; gap: 4px; align-items: center; }
+.recent-input { display: flex; gap: 8px; align-items: center; color: var(--muted); }

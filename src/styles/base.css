@@ -1,0 +1,39 @@
+/* WinRate theme: navy and gold, gold balls for main numbers, blue for Euro numbers. */
+:root {
+  /* Light theme in the colours of the Polish Lotto: navy, yellow and white. */
+  --bg-0: #eef2f8;
+  --bg-1: #ffffff;
+  --bg-2: #f5f7fb;
+  --bg-3: #e6ecf6;
+  --line: #d6deeb;
+  --text: #1b2a44;
+  --muted: #5f6e86;
+  --navy: #0b3d91;
+  --navy-2: #072c6b;
+  --gold: #ffc800;
+  --gold-hi: #0b3d91;
+  --blue: #2f7de1;
+  --green: #12935a;
+  --red: #d7263d;
+  --amber: #c77700;
+  --radius: 10px;
+  --font: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg-0); color: var(--text); font: 15px/1.5 var(--font); overflow: hidden; user-select: none; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+h1 { font-size: 26px; color: var(--navy); }
+h2 { font-size: 16px; color: var(--navy); margin-bottom: 12px; }
+h3 { font-size: 14px; color: var(--navy); margin: 12px 0 6px; }
+p { margin: 0 0 8px; }
+a { color: var(--blue); }
+input, select, button { font: inherit; color: inherit; }
+input, select { background: #fff; border: 1px solid #c3cfe2; border-radius: 8px; padding: 7px 10px; user-select: text; }
+input:focus, select:focus { outline: 1px solid var(--gold); }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.good { color: var(--green); }
+.bad { color: var(--red); }
+.warn { color: var(--amber); }

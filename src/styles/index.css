@@ -1,0 +1,13 @@
+/* WinRate styles, split by area; class names are shared by the components. */
+@import './base.css';
+@import './titlebar.css';
+@import './layout.css';
+@import './tabs.css';
+@import './cards.css';
+@import './buttons.css';
+@import './balls.css';
+@import './tables.css';
+@import './charts.css';
+@import './feedback.css';
+@import './hints.css';
+@import './coupons.css';

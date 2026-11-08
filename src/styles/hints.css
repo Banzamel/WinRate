@@ -1,0 +1,8 @@
+/* Collapsed explanations: "ⓘ" opens the text. */
+details.info { margin-top: 10px; color: var(--muted); font-size: 13px; }
+details.info > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--navy); font-weight: 600; font-size: 13px; }
+details.info > summary::-webkit-details-marker { display: none; }
+details.info > summary::before { content: "i"; width: 18px; height: 18px; border-radius: 50%; background: var(--navy); color: #fff; display: inline-grid; place-items: center; font-size: 12px; font-weight: 800; font-style: italic; }
+details.info[open] > summary { margin-bottom: 4px; }
+.big-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn.large { padding: 12px 22px; font-size: 16px; }

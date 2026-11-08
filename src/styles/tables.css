@@ -1,0 +1,7 @@
+/* Tables */
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--line); padding: 6px 8px; }
+.table td { border-bottom: 1px solid var(--bg-3); padding: 6px 8px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.table.small td { font-size: 12.5px; }
+.table.filters tr.off td { opacity: .55; }
+.filter-control { display: inline-flex; gap: 8px; align-items: center; }

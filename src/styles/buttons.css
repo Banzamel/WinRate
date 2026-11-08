@@ -1,0 +1,17 @@
+/* Buttons */
+.btn { background: var(--bg-1); border: 1px solid var(--navy); color: var(--navy); border-radius: 8px; padding: 9px 16px; cursor: pointer; font-weight: 700; }
+.btn:hover { background: var(--bg-3); }
+.btn.primary { background: var(--gold); color: var(--navy-2); border-color: var(--gold); }
+.btn.primary:hover { background: #ffd633; }
+.btn.ghost { background: none; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.busy { opacity: .85; cursor: progress; display: inline-flex; align-items: center; gap: 8px; }
+.btn.busy .spin { width: 14px; height: 14px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.icon-btn { border: 0; background: none; color: var(--muted); cursor: pointer; margin-left: auto; }
+.icon-btn:hover { color: var(--red); }
+.form-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 8px; }
+.form-row label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; }
+.num { width: 90px; }
+.range { display: inline-flex; gap: 6px; align-items: center; }
+.range .num { width: 70px; }
