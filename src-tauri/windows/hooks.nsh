@@ -48,6 +48,16 @@
   CreateDirectory "$INSTDIR\data"
 !macroend
 
+; electron-updater starts the new installer silently with --force-run and expects it to start the
+; app again; Tauri's own updater restarts the app by itself.
+!macro NSIS_HOOK_POSTINSTALL
+  ClearErrors
+  ${GetOptions} $CMDLINE "--force-run" $R0
+  ${IfNot} ${Errors}
+    Exec '"$INSTDIR\${MAINBINARYNAME}.exe"'
+  ${EndIf}
+!macroend
+
 !macro NSIS_HOOK_POSTUNINSTALL
   ${If} $UpdateMode <> 1
     RMDir /r "$INSTDIR\data"
